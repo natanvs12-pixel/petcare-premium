@@ -1,11 +1,10 @@
-/* PetCare+ Premium - Service Worker
-   Estratégia: network-first com fallback para cache.
-   - Sempre busca a versão mais recente quando online
-   - Se offline, serve do cache
-   - Não intercepta requisições externas (fotos hospedadas, etc)
-   - Não interfere com localStorage (uploads base64, dados, álbum) */
+/* PetCare+ Premium - Service Worker v2
+   - Cache network-first com fallback offline
+   - Cacheia também os SDKs do Firebase (gstatic.com) para abrir offline
+   - Não interfere com chamadas a firestore.googleapis.com (Firestore tem seu próprio offline) */
 
-const CACHE = 'petcare-premium-v1';
+const CACHE = 'petcare-premium-v2';
+const FIREBASE_BASE = 'https://www.gstatic.com/firebasejs/10.13.0/';
 const ASSETS = [
   './',
   './index.html',
@@ -17,7 +16,10 @@ const ASSETS = [
   './apple-touch-icon.png',
   './favicon-32.png',
   './favicon-16.png',
-  './favicon.ico'
+  './favicon.ico',
+  FIREBASE_BASE + 'firebase-app-compat.js',
+  FIREBASE_BASE + 'firebase-auth-compat.js',
+  FIREBASE_BASE + 'firebase-firestore-compat.js'
 ];
 
 self.addEventListener('install', e => {
@@ -40,8 +42,10 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
-  // Só intercepta same-origin (não interfere com fotos do Unsplash, base64 etc)
-  if (url.origin !== location.origin) return;
+  const sameOrigin = url.origin === location.origin;
+  const isFirebaseSdk = url.hostname === 'www.gstatic.com' && url.pathname.includes('/firebasejs/');
+  // Não intercepta Firestore/Auth APIs (têm seu próprio offline) nem outras origens
+  if (!sameOrigin && !isFirebaseSdk) return;
 
   e.respondWith(
     fetch(e.request)
@@ -51,7 +55,7 @@ self.addEventListener('fetch', e => {
         return res;
       })
       .catch(() =>
-        caches.match(e.request).then(r => r || caches.match('./index.html'))
+        caches.match(e.request).then(r => r || (sameOrigin ? caches.match('./index.html') : undefined))
       )
   );
 });
