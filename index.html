@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -23,6 +24,11 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="application-name" content="PetCare+ Premium">
 <meta name="format-detection" content="telephone=no">
+
+<!-- Firebase v10 (compat: mantém API global, compatível com onclick=) -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 
 <style>
 *{box-sizing:border-box}
@@ -150,11 +156,42 @@ const app=$('#app');
 const K='petcare_plus_premium_v1';
 const PHOTO='https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=500&q=80';
 
-/* ============ STATE ============ */
-let state=JSON.parse(localStorage.getItem(K)||'null')||{
-  email:'',plan:'premium',pets:[],activePet:null,
-  vaccines:[],grooming:[],food:{},reminders:[],gallery:[],expenses:[]
+/* ================================================================
+   👇 COLOQUE AQUI AS CREDENCIAIS DO SEU PROJETO FIREBASE.
+   Console: https://console.firebase.google.com → Configurações do projeto → Seus apps → Configuração SDK
+   ================================================================ */
+const firebaseConfig = {
+  apiKey: "COLOCAR_AQUI",
+  authDomain: "COLOCAR_AQUI",
+  projectId: "COLOCAR_AQUI",
+  storageBucket: "COLOCAR_AQUI",
+  messagingSenderId: "COLOCAR_AQUI",
+  appId: "COLOCAR_AQUI"
 };
+
+// Guard: se o SDK do Firebase não carregou (sem internet na primeira visita,
+// CDN bloqueado etc), mostra mensagem amigável em vez de tela branca.
+if(typeof firebase==='undefined'){
+  document.getElementById('app').innerHTML=`
+    <div style="padding:30px;text-align:center;font-family:system-ui">
+      <div style="font-size:48px">📡</div>
+      <h2>Sem conexão com a internet</h2>
+      <p style="color:#64748b">O PetCare+ Premium precisa carregar uma vez online para funcionar offline depois.<br><br>Verifique sua conexão e recarregue.</p>
+      <button onclick="location.reload()" style="margin-top:14px;padding:14px 22px;border:0;border-radius:14px;background:#0ea5e9;color:white;font-weight:800;font-size:15px">🔄 Tentar novamente</button>
+    </div>`;
+  throw new Error('Firebase SDK não carregou');
+}
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+// Persistência offline: o Firestore guarda no IndexedDB e sincroniza ao voltar a internet
+db.enablePersistence({synchronizeTabs:true}).catch(err=>console.warn('Persistência offline:', err.code||err));
+
+let uid = null;
+
+/* ============ STATE ============ */
+function freshState(){return {email:'',plan:'premium',pets:[],activePet:null,vaccines:[],grooming:[],food:{},reminders:[],gallery:[],expenses:[]}}
+let state=JSON.parse(localStorage.getItem(K)||'null')||freshState();
 // Compatibilidade: garante que arrays existam (caso state tenha sido salvo antes)
 ['vaccines','grooming','reminders','gallery','expenses'].forEach(k=>{if(!Array.isArray(state[k]))state[k]=[]});
 if(!state.food||typeof state.food!=='object')state.food={};
@@ -166,6 +203,73 @@ function save(){
     alert('⚠️ Espaço cheio no celular. Tente apagar fotos antigas do álbum, registros antigos ou usar fotos menores.');
     return false;
   }
+}
+
+/* ============ NUVEM (Firestore) ============
+   Estrutura por usuário:
+     users/{uid}/pets/{petId}
+     users/{uid}/vaccines/{vacId}
+     users/{uid}/grooming/{groomId}
+     users/{uid}/reminders/{remId}
+     users/{uid}/gallery/{photoId}
+     users/{uid}/expenses/{expId}
+     users/{uid}/meta/main         ← {activePet, food, email}
+   Erros são silenciosos: localStorage continua como fonte de verdade enquanto offline.
+*/
+function userDoc(){return uid?db.collection('users').doc(uid):null}
+function userCol(name){return uid?userDoc().collection(name):null}
+async function cloudSetItem(col,obj){if(!uid)return;try{await userCol(col).doc(obj.id).set(obj)}catch(e){console.warn('[sync] '+col,e.code||e.message)}}
+async function cloudDelItem(col,id){if(!uid)return;try{await userCol(col).doc(id).delete()}catch(e){console.warn('[sync del] '+col,e.code||e.message)}}
+async function cloudSetMeta(patch){if(!uid)return;try{await userCol('meta').doc('main').set(patch,{merge:true})}catch(e){console.warn('[sync meta]',e.code||e.message)}}
+async function cloudCascadeDeletePet(petId){
+  if(!uid)return;
+  try{
+    const cols=['vaccines','grooming','reminders','gallery','expenses'];
+    const batch=db.batch();
+    batch.delete(userCol('pets').doc(petId));
+    for(const c of cols){
+      const snap=await userCol(c).where('petId','==',petId).get();
+      snap.docs.forEach(d=>batch.delete(d.ref));
+    }
+    await batch.commit();
+  }catch(e){console.warn('[sync cascade]',e.code||e.message)}
+}
+async function loadFromCloud(){
+  if(!uid)return false;
+  try{
+    const cols=['pets','vaccines','grooming','reminders','gallery','expenses'];
+    const snaps=await Promise.all([...cols.map(c=>userCol(c).get()),userCol('meta').doc('main').get()]);
+    state.pets    =snaps[0].docs.map(d=>d.data());
+    state.vaccines=snaps[1].docs.map(d=>d.data());
+    state.grooming=snaps[2].docs.map(d=>d.data());
+    state.reminders=snaps[3].docs.map(d=>d.data());
+    state.gallery =snaps[4].docs.map(d=>d.data());
+    state.expenses=snaps[5].docs.map(d=>d.data());
+    const meta=snaps[6].data()||{};
+    state.activePet=meta.activePet||(state.pets[0]?state.pets[0].id:null);
+    state.food=meta.food||{};
+    state.email=(auth.currentUser&&auth.currentUser.email)||meta.email||state.email;
+    state.plan='premium';
+    save();
+    return true;
+  }catch(e){
+    console.warn('[loadFromCloud]',e.code||e.message);
+    return false;
+  }
+}
+async function pushAllToCloud(){
+  if(!uid)return;
+  try{
+    const batch=db.batch();
+    state.pets.forEach(p=>batch.set(userCol('pets').doc(p.id),p));
+    state.vaccines.forEach(v=>batch.set(userCol('vaccines').doc(v.id),v));
+    state.grooming.forEach(g=>batch.set(userCol('grooming').doc(g.id),g));
+    state.reminders.forEach(r=>batch.set(userCol('reminders').doc(r.id),r));
+    state.gallery.forEach(g=>batch.set(userCol('gallery').doc(g.id),g));
+    state.expenses.forEach(e=>batch.set(userCol('expenses').doc(e.id),e));
+    batch.set(userCol('meta').doc('main'),{activePet:state.activePet,food:state.food,email:state.email,plan:'premium'},{merge:true});
+    await batch.commit();
+  }catch(e){console.warn('[pushAllToCloud]',e.code||e.message)}
 }
 
 /* ============ HELPERS ============ */
@@ -241,29 +345,126 @@ function compressImage(file,cb,maxSize=900,quality=0.78){
   reader.readAsDataURL(file);
 }
 
-/* ============ LOGIN ============ */
-function login(){
+/* ============ AUTENTICAÇÃO (Firebase) ============ */
+function authLoading(){
+  app.innerHTML=`<div class="hero" style="padding-top:25vh">
+    ${logoEl(true)}
+    <div class="brand" style="margin-top:20px;justify-content:center">PetCare<span class="plus">+</span><span class="premium-text">PREMIUM</span></div>
+    <p class="muted" style="margin-top:30px">Carregando...</p>
+  </div>`;
+}
+
+function loginScreen(prefillEmail){
   app.innerHTML=`<div class="hero">
     ${logoEl(true)}
     <div class="brand" style="margin-top:14px;justify-content:center">PetCare<span class="plus">+</span><span class="premium-text">PREMIUM</span></div>
     <span class="crown" style="margin-top:14px">👑 EXCLUSIVO PREMIUM</span>
-    <h1 style="margin-top:24px">Área Premium para Assinantes</h1>
-    <p class="muted">Cuide de todos os seus pets em um só lugar, com recursos avançados para rotina, saúde, alimentação e controle de gastos.</p>
+    <h1 style="margin-top:24px">Acesse sua conta</h1>
+    <p class="muted">Seus dados ficam sincronizados em todos os seus dispositivos.</p>
     <div class="card" style="text-align:left;margin-top:24px">
-      <label>Digite seu e-mail de compra</label>
-      <input id="email" type="email" placeholder="seu@email.com" autocomplete="email">
+      <label>E-mail</label>
+      <input id="loginEmail" type="email" placeholder="seu@email.com" autocomplete="email" value="${esc(prefillEmail||'')}">
+      <label>Senha</label>
+      <input id="loginPass" type="password" placeholder="••••••" autocomplete="current-password">
       <br><br>
-      <button class="btn gold" onclick="doLogin()">👑 Acessar Plano Premium</button>
+      <button class="btn gold" onclick="doSignIn()">👑 Entrar</button>
       <br><br>
+      <div style="display:flex;gap:8px">
+        <button class="btn secondary" style="flex:1" onclick="signupScreen()">Criar conta</button>
+        <button class="btn secondary" style="flex:1" onclick="forgotScreen()">Esqueci a senha</button>
+      </div>
+      <br>
       <button class="btn secondary" onclick="install()">📱 Como instalar no celular</button>
     </div>
   </div>`;
 }
-function doLogin(){
-  const e=$('#email').value.trim().toLowerCase();
-  if(!e.includes('@'))return alert('Digite um e-mail válido');
-  state.email=e;save();
-  if(!state.pets.length)register();else home();
+
+function signupScreen(){
+  app.innerHTML=`${topbar('Criar conta','loginScreen()')}
+  <div class="p"><div class="card">
+    <h2 style="margin-top:0">👑 Criar conta Premium</h2>
+    <p class="small" style="margin-bottom:6px">Crie sua conta para sincronizar seus dados na nuvem e acessar de qualquer celular.</p>
+    <label>E-mail</label>
+    <input id="suEmail" type="email" placeholder="seu@email.com" autocomplete="email">
+    <label>Senha</label>
+    <input id="suPass" type="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+    <label>Confirmar senha</label>
+    <input id="suPass2" type="password" placeholder="Repita a senha" autocomplete="new-password">
+    <br><br>
+    <button class="btn gold" onclick="doSignup()">Criar minha conta</button>
+    <br><br>
+    <button class="btn secondary" onclick="loginScreen()">Já tenho conta</button>
+  </div></div>`;
+}
+
+function forgotScreen(){
+  app.innerHTML=`${topbar('Recuperar senha','loginScreen()')}
+  <div class="p"><div class="card">
+    <h2 style="margin-top:0">🔑 Recuperar senha</h2>
+    <p class="small" style="margin-bottom:6px">Vamos enviar um link de recuperação para o seu e-mail.</p>
+    <label>E-mail</label>
+    <input id="fpEmail" type="email" placeholder="seu@email.com" autocomplete="email">
+    <br><br>
+    <button class="btn" onclick="doForgot()">Enviar link de recuperação</button>
+    <br><br>
+    <button class="btn secondary" onclick="loginScreen()">Voltar</button>
+  </div></div>`;
+}
+
+async function doSignIn(){
+  const email=$('#loginEmail').value.trim().toLowerCase();
+  const pass=$('#loginPass').value;
+  if(!email.includes('@'))return alert('Digite um e-mail válido');
+  if(!pass)return alert('Digite sua senha');
+  authLoading();
+  try{await auth.signInWithEmailAndPassword(email,pass)}
+  catch(e){alert(authErr(e));loginScreen(email)}
+}
+
+async function doSignup(){
+  const email=$('#suEmail').value.trim().toLowerCase();
+  const pass=$('#suPass').value;
+  const pass2=$('#suPass2').value;
+  if(!email.includes('@'))return alert('Digite um e-mail válido');
+  if(pass.length<6)return alert('A senha precisa ter no mínimo 6 caracteres');
+  if(pass!==pass2)return alert('As senhas não conferem');
+  authLoading();
+  try{await auth.createUserWithEmailAndPassword(email,pass)}
+  catch(e){alert(authErr(e));signupScreen()}
+}
+
+async function doForgot(){
+  const email=$('#fpEmail').value.trim().toLowerCase();
+  if(!email.includes('@'))return alert('Digite um e-mail válido');
+  try{
+    await auth.sendPasswordResetEmail(email);
+    alert('✅ Link enviado para '+email+'. Verifique sua caixa de entrada (e o spam).');
+    loginScreen(email);
+  }catch(e){alert(authErr(e))}
+}
+
+async function doLogout(){
+  if(!confirm('Sair da sua conta? Seus dados continuam salvos na nuvem.'))return;
+  try{await auth.signOut()}
+  catch(e){alert('Erro ao sair: '+(e.message||e.code))}
+}
+
+function authErr(e){
+  const c=(e&&e.code)||'';
+  switch(c){
+    case 'auth/invalid-email':return 'E-mail inválido.';
+    case 'auth/user-disabled':return 'Esta conta está desativada.';
+    case 'auth/user-not-found':return 'E-mail não cadastrado. Crie uma conta primeiro.';
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential':
+    case 'auth/invalid-login-credentials':return 'E-mail ou senha incorretos.';
+    case 'auth/email-already-in-use':return 'Este e-mail já tem uma conta. Faça login.';
+    case 'auth/weak-password':return 'Senha muito fraca (mínimo 6 caracteres).';
+    case 'auth/network-request-failed':return 'Erro de conexão. Verifique sua internet.';
+    case 'auth/too-many-requests':return 'Muitas tentativas. Tente novamente mais tarde.';
+    case 'auth/operation-not-allowed':return 'Login por e-mail/senha não está habilitado no Firebase. Ative em Authentication → Sign-in method.';
+    default:return 'Erro: '+(e.message||c||'desconhecido');
+  }
 }
 
 /* ============ CADASTRO / EDIÇÃO DE PET ============ */
@@ -271,7 +472,7 @@ function register(editId){
   const p=editId?state.pets.find(x=>x.id===editId)||{}:{};
   const hasPhoto=p.photo&&p.photo.startsWith('data:');
   const isFirst=!state.pets.length;
-  app.innerHTML=`${topbar(editId?'Editar pet':(isFirst?'Cadastrar primeiro pet':'Adicionar pet'),isFirst?'login()':'pets()')}
+  app.innerHTML=`${topbar(editId?'Editar pet':(isFirst?'Cadastrar primeiro pet':'Adicionar pet'),isFirst?'home()':'pets()')}
   <div class="p"><div class="card">
     <label>Nome do pet *</label>
     <input id="pName" value="${esc(p.name)}" placeholder="Ex: Thor">
@@ -351,9 +552,14 @@ function savePet(editId){
     medications:$('#pMeds').value.trim(),
     observations:$('#pObs').value.trim()
   };
+  let activePetChanged=false;
   if(editId){state.pets=state.pets.map(p=>p.id===editId?obj:p)}
-  else{state.pets.push(obj);state.activePet=obj.id}
-  if(save())home();
+  else{state.pets.push(obj);state.activePet=obj.id;activePetChanged=true}
+  if(save()){
+    cloudSetItem('pets',obj);
+    if(activePetChanged)cloudSetMeta({activePet:state.activePet});
+    home();
+  }
 }
 function deletePet(petId){
   if(!confirm('Excluir este pet e TODOS os registros (vacinas, banhos, lembretes, álbum, gastos)?'))return;
@@ -364,14 +570,18 @@ function deletePet(petId){
   state.gallery=state.gallery.filter(g=>g.petId!==petId);
   state.expenses=state.expenses.filter(e=>e.petId!==petId);
   if(state.food)delete state.food[petId];
-  if(state.activePet===petId)state.activePet=state.pets[0]?state.pets[0].id:null;
+  let activeChanged=false;
+  if(state.activePet===petId){state.activePet=state.pets[0]?state.pets[0].id:null;activeChanged=true}
   save();
+  cloudCascadeDeletePet(petId);
+  if(activeChanged)cloudSetMeta({activePet:state.activePet,food:state.food});
+  else cloudSetMeta({food:state.food});
   if(!state.pets.length)register();else pets();
 }
 
 /* ============ HOME / DASHBOARD ============ */
 function home(){
-  if(!state.email)return login();
+  if(!uid)return loginScreen();
   if(!state.pets.length)return register();
   const p=pet();
 
@@ -450,11 +660,11 @@ function home(){
 
   </div>${nav('home')}`;
 }
-function switchPet(petId){state.activePet=petId;save();home()}
+function switchPet(petId){state.activePet=petId;save();cloudSetMeta({activePet:petId});home()}
 
 /* ============ LISTA DE PETS ============ */
 function pets(){
-  if(!state.email)return login();
+  if(!uid)return loginScreen();
   const list=state.pets.map(p=>{
     const vc=state.vaccines.filter(v=>v.petId===p.id).length;
     const gc=state.grooming.filter(g=>g.petId===p.id).length;
@@ -486,7 +696,7 @@ function pets(){
 
 /* ============ VACINAS ============ */
 function vaccines(){
-  if(!state.email)return login();
+  if(!uid)return loginScreen();
   if(!state.pets.length)return register();
   const p=pet();
   const list=[...state.vaccines.filter(v=>v.petId===p.id)]
@@ -554,13 +764,13 @@ function saveVac(editId){
   const obj={id:editId||id(),petId:pet().id,name,date,next:$('#vNext').value,clinic:$('#vClinic').value.trim(),obs:$('#vObs').value.trim(),photo:$('#vPhotoData').value};
   if(editId)state.vaccines=state.vaccines.map(x=>x.id===editId?obj:x);
   else state.vaccines.push(obj);
-  if(save())vaccines();
+  if(save()){cloudSetItem('vaccines',obj);vaccines()}
 }
-function delVac(i){if(!confirm('Excluir esta vacina?'))return;state.vaccines=state.vaccines.filter(v=>v.id!==i);save();vaccines()}
+function delVac(i){if(!confirm('Excluir esta vacina?'))return;state.vaccines=state.vaccines.filter(v=>v.id!==i);save();cloudDelItem('vaccines',i);vaccines()}
 
 /* ============ BANHO / TOSA ============ */
 function grooming(){
-  if(!state.email)return login();
+  if(!uid)return loginScreen();
   if(!state.pets.length)return register();
   const p=pet();
   const recs=[...state.grooming.filter(g=>g.petId===p.id)].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
@@ -638,13 +848,13 @@ function saveGrooming(editId){
   const obj={id:editId||id(),petId:pet().id,type:$('#gType').value,date:$('#gDate').value,next:$('#gNext').value,location:$('#gLoc').value,place:$('#gPlace').value.trim(),price:$('#gPrice').value,obs:$('#gObs').value.trim(),photo:$('#gPhotoData').value};
   if(editId)state.grooming=state.grooming.map(x=>x.id===editId?obj:x);
   else state.grooming.push(obj);
-  if(save())grooming();
+  if(save()){cloudSetItem('grooming',obj);grooming()}
 }
-function delGrooming(i){if(!confirm('Excluir este registro?'))return;state.grooming=state.grooming.filter(g=>g.id!==i);save();grooming()}
+function delGrooming(i){if(!confirm('Excluir este registro?'))return;state.grooming=state.grooming.filter(g=>g.id!==i);save();cloudDelItem('grooming',i);grooming()}
 
 /* ============ ALIMENTAÇÃO PREMIUM ============ */
 function foodScreen(tab){
-  if(!state.email)return login();
+  if(!uid)return loginScreen();
   if(!state.pets.length)return register();
   const p=pet();
   const cur=state.food[p.id]||{};
@@ -701,12 +911,12 @@ function saveFood(){
     allowed:$('#fAllowed').value.trim(),forbidden:$('#fForbidden').value.trim(),
     allergies:$('#fAllergies').value.trim(),notes:$('#fNotes').value.trim()
   };
-  if(save())alert('✅ Configurações de alimentação salvas!');
+  if(save()){cloudSetMeta({food:state.food});alert('✅ Configurações de alimentação salvas!')}
 }
 
 /* ============ LEMBRETES (com recorrência) ============ */
 function reminders(tab){
-  if(!state.email)return login();
+  if(!uid)return loginScreen();
   if(!state.pets.length)return register();
   const p=pet();
   tab=tab||'pending';
@@ -775,28 +985,32 @@ function saveRem(editId){
     if(old)obj.done=old.done;
     state.reminders=state.reminders.map(x=>x.id===editId?obj:x);
   }else state.reminders.push(obj);
-  if(save())reminders();
+  if(save()){cloudSetItem('reminders',obj);reminders()}
 }
 function toggleRem(i){
   const r=state.reminders.find(x=>x.id===i);
   if(!r)return;
-  // Marcando como feito + recorrência: cria automaticamente o próximo
+  let recurred=null;
   if(!r.done&&r.repeat&&r.repeat!=='none'){
     const next=new Date(r.date+'T00:00:00');
     if(r.repeat==='daily')next.setDate(next.getDate()+1);
     else if(r.repeat==='weekly')next.setDate(next.getDate()+7);
     else if(r.repeat==='monthly')next.setMonth(next.getMonth()+1);
     else if(r.repeat==='yearly')next.setFullYear(next.getFullYear()+1);
-    state.reminders.push({...r,id:id(),date:next.toISOString().slice(0,10),done:false});
+    recurred={...r,id:id(),date:next.toISOString().slice(0,10),done:false};
+    state.reminders.push(recurred);
   }
   r.done=!r.done;
-  save();reminders();
+  save();
+  cloudSetItem('reminders',r);
+  if(recurred)cloudSetItem('reminders',recurred);
+  reminders();
 }
-function delRem(i){if(!confirm('Excluir este lembrete?'))return;state.reminders=state.reminders.filter(r=>r.id!==i);save();reminders()}
+function delRem(i){if(!confirm('Excluir este lembrete?'))return;state.reminders=state.reminders.filter(r=>r.id!==i);save();cloudDelItem('reminders',i);reminders()}
 
 /* ============ CARTEIRA DIGITAL ============ */
 function wallet(){
-  if(!state.email)return login();
+  if(!uid)return loginScreen();
   if(!state.pets.length)return register();
   const p=pet();
   const vacs=state.vaccines.filter(v=>v.petId===p.id).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
@@ -888,7 +1102,7 @@ function fallbackCopy(text){
 
 /* ============ ÁLBUM DE FOTOS ============ */
 function gallery(filter){
-  if(!state.email)return login();
+  if(!uid)return loginScreen();
   if(!state.pets.length)return register();
   const p=pet();
   filter=filter||'all';
@@ -927,8 +1141,9 @@ function prevGalPhoto(e){compressImage(e.target.files[0],d=>{$('#galPhotoData').
 function saveGalPhoto(){
   const photo=$('#galPhotoData').value;
   if(!photo)return alert('Selecione uma foto');
-  state.gallery.push({id:id(),petId:pet().id,photo,title:$('#galTitle').value.trim(),date:$('#galDate').value,category:$('#galCat').value});
-  if(save())gallery();
+  const obj={id:id(),petId:pet().id,photo,title:$('#galTitle').value.trim(),date:$('#galDate').value,category:$('#galCat').value};
+  state.gallery.push(obj);
+  if(save()){cloudSetItem('gallery',obj);gallery()}
 }
 function viewPhoto(i){
   const g=state.gallery.find(x=>x.id===i);
@@ -948,13 +1163,14 @@ function delGalPhoto(i){
   if(!confirm('Excluir esta foto do álbum?'))return;
   state.gallery=state.gallery.filter(g=>g.id!==i);
   save();
+  cloudDelItem('gallery',i);
   document.querySelectorAll('.modal').forEach(m=>m.remove());
   gallery();
 }
 
 /* ============ FINANCEIRO ============ */
 function expenses(){
-  if(!state.email)return login();
+  if(!uid)return loginScreen();
   if(!state.pets.length)return register();
   const p=pet();
   const list=state.expenses.filter(e=>e.petId===p.id).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
@@ -1010,10 +1226,11 @@ function saveExpense(){
   const amount=$('#eAmount').value;
   if(!amount||parseFloat(amount)<=0)return alert('Informe um valor válido');
   if(!$('#eDate').value)return alert('Informe a data');
-  state.expenses.push({id:id(),petId:pet().id,category:$('#eCat').value,amount,date:$('#eDate').value,obs:$('#eObs').value.trim()});
-  if(save())expenses();
+  const obj={id:id(),petId:pet().id,category:$('#eCat').value,amount,date:$('#eDate').value,obs:$('#eObs').value.trim()};
+  state.expenses.push(obj);
+  if(save()){cloudSetItem('expenses',obj);expenses()}
 }
-function delExpense(i){if(!confirm('Excluir esta despesa?'))return;state.expenses=state.expenses.filter(e=>e.id!==i);save();expenses()}
+function delExpense(i){if(!confirm('Excluir esta despesa?'))return;state.expenses=state.expenses.filter(e=>e.id!==i);save();cloudDelItem('expenses',i);expenses()}
 
 /* ============ RECEITAS PREMIUM ============ */
 const RECIPES=[
@@ -1027,7 +1244,7 @@ const RECIPES=[
   {cat:'Refrescantes',name:'Sopa leve para dias quentes',ing:['200ml de água','100g de peito de frango','1 cenoura pequena','1 colher de chá de salsinha'],steps:'Cozinhe o frango e a cenoura em cubinhos por 20 min na água sem sal. Desfie o frango, pique a cenoura, adicione a salsinha picada. Sirva morno ou em temperatura ambiente.',warn:'Ótimo para hidratação em dias quentes. Não substitui água fresca disponível o tempo todo.'}
 ];
 function recipes(cat){
-  if(!state.email)return login();
+  if(!uid)return loginScreen();
   const cats=['Todas','Petiscos','Refeições','Refrescantes'];
   cat=cat||'Todas';
   const list=cat==='Todas'?RECIPES:RECIPES.filter(r=>r.cat===cat);
@@ -1075,7 +1292,7 @@ function viewRecipe(idx){
 
 /* ============ TELA "MAIS" ============ */
 function more(){
-  if(!state.email)return login();
+  if(!uid)return loginScreen();
   app.innerHTML=`${topbar('Mais opções')}<div class="p">
     <div class="grid g2">
       <button class="btn secondary qa" onclick="foodScreen()">🍽️<br>Alimentação</button>
@@ -1090,7 +1307,7 @@ function more(){
 
 /* ============ CONFIGURAÇÕES ============ */
 function settings(){
-  if(!state.email)return login();
+  if(!uid)return loginScreen();
   const p=pet();
   app.innerHTML=`${topbar('Configurações')}<div class="p">
     <div class="card">
@@ -1130,13 +1347,27 @@ function settings(){
     </div>
   </div>${nav('more')}`;
 }
-function logout(){if(confirm('Sair do app? Seus dados continuam salvos no celular.')){state.email='';save();login()}}
+function logout(){doLogout()}
 function wipeAll(){
-  if(!confirm('Tem CERTEZA? Isso apaga todos os pets, vacinas, banhos, álbum, financeiro e configurações.'))return;
+  if(!confirm('Tem CERTEZA? Isso apaga TODOS os pets, vacinas, banhos, álbum, financeiro e configurações — também na nuvem.'))return;
   if(!confirm('Última confirmação. Esta ação NÃO pode ser desfeita.'))return;
-  localStorage.removeItem(K);
-  state={email:'',plan:'premium',pets:[],activePet:null,vaccines:[],grooming:[],food:{},reminders:[],gallery:[],expenses:[]};
-  login();
+  (async()=>{
+    if(uid){
+      try{
+        const cols=['pets','vaccines','grooming','reminders','gallery','expenses','meta'];
+        for(const c of cols){
+          const snap=await userCol(c).get();
+          const batch=db.batch();
+          snap.docs.forEach(d=>batch.delete(d.ref));
+          await batch.commit();
+        }
+      }catch(e){alert('Não foi possível limpar a nuvem: '+(e.message||e.code))}
+    }
+    localStorage.removeItem(K);
+    state=freshState();
+    if(uid){if(state.pets.length)home();else register()}else loginScreen();
+    alert('✅ Dados apagados.');
+  })();
 }
 
 /* ============ EXPORT / IMPORT ============ */
@@ -1179,8 +1410,9 @@ function importBackup(e){
       state=novo;
       try{
         save();e.target.value='';
-        alert('✅ Backup restaurado com sucesso!');
-        if(state.email&&state.pets.length)home();else if(state.email)register();else login();
+        alert('✅ Backup restaurado!'+(uid?' Sincronizando com a nuvem...':''));
+        if(uid)pushAllToCloud();
+        if(state.pets.length)home();else if(uid)register();else loginScreen();
       }catch(qe){
         state=JSON.parse(backup);
         alert('Espaço cheio. Tente em um aparelho com mais espaço.');e.target.value='';
@@ -1192,7 +1424,7 @@ function importBackup(e){
 
 /* ============ INSTALAR NO CELULAR ============ */
 function install(){
-  app.innerHTML=`${topbar('Instalar aplicativo',state.email?'settings()':'login()')}<div class="p">
+  app.innerHTML=`${topbar('Instalar aplicativo',uid?'settings()':'loginScreen()')}<div class="p">
     <div class="alert purple">📱 Após instalar, o app abre em tela cheia, com ícone próprio e funciona offline.</div>
     <div class="card" style="margin-top:14px">
       <b>🤖 Android</b>
@@ -1213,16 +1445,40 @@ function install(){
       </ol>
     </div>
     <br>
-    <button class="btn" onclick="${state.email?(state.pets.length?'home()':'register()'):'login()'}">Continuar</button>
+    <button class="btn" onclick="${uid?(state.pets.length?'home()':'register()'):'loginScreen()'}">Continuar</button>
   </div>`;
 }
 
-/* ============ BOOT ============ */
-if(state.email){
-  if(state.pets.length)home();else register();
-}else{
-  login();
-}
+/* ============ BOOT (Firebase Auth) ============ */
+authLoading();
+auth.onAuthStateChanged(async user=>{
+  if(user){
+    uid=user.uid;
+    const lastUid=localStorage.getItem(K+'_uid');
+    if(lastUid&&lastUid!==user.uid){
+      // Outro usuário fez login no mesmo aparelho: limpa cache local
+      localStorage.removeItem(K);
+      state=freshState();
+    }
+    localStorage.setItem(K+'_uid',user.uid);
+    state.email=user.email||state.email;
+    state.plan='premium';
+    save();
+    // Mostra cache local imediatamente para UX instantânea
+    if(state.pets.length)home();else register();
+    // Depois sincroniza com a nuvem (pode atualizar a UI)
+    const ok=await loadFromCloud();
+    if(ok){
+      if(state.pets.length)home();else register();
+    }
+  }else{
+    uid=null;
+    localStorage.removeItem(K);
+    localStorage.removeItem(K+'_uid');
+    state=freshState();
+    loginScreen();
+  }
+});
 
 /* ============ SERVICE WORKER (PWA) ============ */
 if('serviceWorker' in navigator){
