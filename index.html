@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>PetCare+ Premium</title>
+<meta name="description" content="App premium para donos de pets: vacinas, banho/tosa, alimentação, lembretes, carteira digital, álbum, financeiro e receitas em um só lugar.">
+<meta name="theme-color" content="#0EA5E9">
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+
+<!-- iOS standalone -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="PetCare+ Premium">
+
+<!-- Android / outros -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="PetCare+ Premium">
+<meta name="format-detection" content="telephone=no">
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#eef4f8;font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',Arial,sans-serif;color:#0f172a}
+.app{max-width:430px;margin:0 auto;min-height:100vh;background:#f8fafc;box-shadow:0 0 35px #0001;position:relative;padding-bottom:88px}
+.center{display:flex;align-items:center;justify-content:center}
+.p{padding:22px}
+.logo{width:52px;height:52px;border-radius:18px;background:linear-gradient(135deg,#0ea5e9,#10b981);color:white;font-size:28px;display:flex;align-items:center;justify-content:center;box-shadow:0 12px 25px #0ea5e955;flex-shrink:0;position:relative}
+.logo.big{width:78px;height:78px;border-radius:26px;font-size:42px}
+.logo .badge{position:absolute;top:-6px;right:-6px;width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#fde047,#f59e0b);color:#78350f;font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:center;border:2px solid white}
+.logo.big .badge{width:32px;height:32px;font-size:18px;top:-4px;right:-4px}
+
+.brand{font-weight:900;font-size:22px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.brand .plus{color:#f97316}
+.brand .premium-text{font-size:11px;background:linear-gradient(135deg,#fde047,#f59e0b);color:#78350f;padding:3px 8px;border-radius:999px;font-weight:900;letter-spacing:.3px}
+
+.card{background:white;border:1px solid #e2e8f0;border-radius:24px;padding:18px;box-shadow:0 8px 22px #0f172a0a}
+.btn{width:100%;border:0;border-radius:18px;padding:15px 18px;font-weight:800;font-size:15px;background:linear-gradient(135deg,#0ea5e9,#0284c7);color:white;box-shadow:0 10px 18px #0ea5e933;cursor:pointer;font-family:inherit}
+.btn.secondary{background:white;color:#0f172a;border:1px solid #dbe3ea;box-shadow:none}
+.btn.orange{background:linear-gradient(135deg,#f97316,#ea580c)}
+.btn.purple{background:linear-gradient(135deg,#8b5cf6,#6366f1);box-shadow:0 10px 18px #8b5cf633}
+.btn.gold{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#78350f;box-shadow:0 12px 22px #f59e0b55;border:1px solid #f59e0b}
+.btn.dark{background:linear-gradient(135deg,#1e293b,#0f172a);color:white}
+.btn.qa{padding:12px 6px;font-size:12px;line-height:1.3;font-weight:800;min-height:64px}
+.btn.danger{color:#dc2626}
+.btn:disabled{opacity:.55}
+
+input,select,textarea{width:100%;border:1px solid #dbe3ea;border-radius:16px;padding:14px;font-size:15px;outline:none;background:white;font-family:inherit}
+textarea{min-height:70px;resize:vertical}
+label{font-size:13px;font-weight:800;color:#475569;display:block;margin:14px 0 6px}
+
+.hero{text-align:center;padding:45px 25px 25px}
+.hero h1{font-size:24px;line-height:1.2;margin:14px 0 8px}
+.hero .muted{font-size:14px}
+
+.grad{background:linear-gradient(135deg,#0ea5e9,#10b981);color:white;border-radius:28px;padding:22px;overflow:hidden}
+.grad-premium{background:linear-gradient(135deg,#1e1b4b 0%,#4c1d95 55%,#6d28d9 100%);color:white;border-radius:28px;padding:22px;overflow:hidden;position:relative}
+.grad-gold{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#78350f;border-radius:28px;padding:22px}
+
+.grid{display:grid;gap:12px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g5{grid-template-columns:repeat(5,1fr)}
+
+.small{font-size:12px;color:#64748b}
+.muted{color:#64748b}
+.danger{color:#dc2626}
+
+.top{position:sticky;top:0;z-index:5;background:#ffffffd9;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid #e2e8f0;padding:14px 18px;display:flex;gap:10px;align-items:center}
+.back{width:36px;height:36px;border:0;border-radius:50%;background:#f1f5f9;font-size:20px;cursor:pointer;flex-shrink:0}
+.crown{display:inline-block;background:linear-gradient(135deg,#fde047,#f59e0b);color:#78350f;padding:4px 10px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.4px;flex-shrink:0}
+
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);max-width:430px;width:100%;background:white;border-top:1px solid #e2e8f0;display:grid;grid-template-columns:repeat(6,1fr);padding:8px 2px;z-index:5}
+.nav button{border:0;background:white;color:#64748b;font-size:10px;font-weight:800;padding:6px 2px;line-height:1.2;cursor:pointer;font-family:inherit}
+.nav .active{color:#0ea5e9}
+.icon{font-size:22px;display:block;margin-bottom:2px}
+
+.pill{display:inline-block;border-radius:999px;background:#e0f2fe;color:#0369a1;font-size:11px;font-weight:900;padding:6px 10px}
+.pill.green{background:#dcfce7;color:#166534}
+.pill.amber{background:#fef3c7;color:#92400e}
+.pill.red{background:#fee2e2;color:#991b1b}
+.pill.gold{background:linear-gradient(135deg,#fde047,#f59e0b);color:#78350f}
+.pill.purple{background:#ede9fe;color:#5b21b6}
+
+.list{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;gap:12px;align-items:center;background:white;border:1px solid #e2e8f0;border-radius:18px;padding:14px}
+.avatar{width:62px;height:62px;border-radius:20px;object-fit:cover;flex-shrink:0;background:#e2e8f0}
+.avatar.lg{width:88px;height:88px;border-radius:26px}
+
+.alert{background:#ecfdf5;color:#047857;border:1px solid #bbf7d0;border-radius:18px;padding:14px;font-weight:700;font-size:14px}
+.alert.warn{background:#fffbeb;color:#b45309;border-color:#fde68a}
+.alert.danger{background:#fef2f2;color:#b91c1c;border-color:#fecaca}
+.alert.purple{background:#f5f3ff;color:#5b21b6;border-color:#ddd6fe}
+
+.statCard{background:white;border:1px solid #e2e8f0;border-radius:20px;padding:14px;cursor:pointer}
+.statCard .small{margin-bottom:4px}
+.statCard b{font-size:16px;display:block;margin:2px 0}
+
+.empty{text-align:center;padding:38px 20px;color:#64748b}
+.photo-prev{width:100%;max-height:240px;object-fit:cover;border-radius:14px;display:block}
+
+.gIcon{width:62px;height:62px;border-radius:18px;background:linear-gradient(135deg,#8b5cf6,#6366f1);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;color:white}
+.gIcon.gold{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#78350f}
+.gIcon.gray{background:#f1f5f9;color:#64748b}
+
+.tabs{display:grid;gap:8px;margin:12px 0}
+.tabs button{border:1px solid #dbe3ea;border-radius:14px;background:white;padding:12px;font-weight:800;cursor:pointer;font-family:inherit;font-size:14px}
+.tabs.t2{grid-template-columns:1fr 1fr}
+.tabs.t3{grid-template-columns:repeat(3,1fr)}
+.tabs .on{background:#0ea5e9;color:white;border-color:#0ea5e9}
+.tabs .on.gold{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#78350f;border-color:#f59e0b}
+
+.gallery-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.gallery-grid .gphoto{aspect-ratio:1;background:#e2e8f0;border-radius:12px;overflow:hidden;cursor:pointer;position:relative}
+.gallery-grid .gphoto img{width:100%;height:100%;object-fit:cover;display:block}
+
+.modal{position:fixed;inset:0;background:#000c;z-index:99;display:flex;align-items:center;justify-content:center;padding:20px;cursor:pointer}
+.modal img{max-width:100%;max-height:90vh;border-radius:14px}
+
+.divider{height:1px;background:#e2e8f0;margin:14px 0}
+
+@media print{
+  body{background:white}
+  .app{box-shadow:none;padding-bottom:0;max-width:100%}
+  .top,.nav,.no-print{display:none!important}
+  .card,.grad,.grad-premium,.grad-gold{box-shadow:none!important;break-inside:avoid}
+}
+
+@media(min-width:800px){body{background:#e5edf3}}
+</style>
+</head>
+<body>
+<div id="app" class="app"></div>
+<script>
+/* ==========================================================================
+   PetCare+ Premium - SPA single-file
+   - LocalStorage key: petcare_plus_premium_v1
+   - Sem dependências externas, sem backend, sem APIs
+   - Todas as fotos são comprimidas para ~900px JPEG q=0.78 antes de salvar
+   ========================================================================== */
+
+const $=s=>document.querySelector(s);
+const app=$('#app');
+const K='petcare_plus_premium_v1';
+const PHOTO='https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=500&q=80';
+
+/* ============ STATE ============ */
+let state=JSON.parse(localStorage.getItem(K)||'null')||{
+  email:'',plan:'premium',pets:[],activePet:null,
+  vaccines:[],grooming:[],food:{},reminders:[],gallery:[],expenses:[]
+};
+// Compatibilidade: garante que arrays existam (caso state tenha sido salvo antes)
+['vaccines','grooming','reminders','gallery','expenses'].forEach(k=>{if(!Array.isArray(state[k]))state[k]=[]});
+if(!state.food||typeof state.food!=='object')state.food={};
+state.plan='premium';
+
+function save(){
+  try{localStorage.setItem(K,JSON.stringify(state));return true}
+  catch(e){
+    alert('⚠️ Espaço cheio no celular. Tente apagar fotos antigas do álbum, registros antigos ou usar fotos menores.');
+    return false;
+  }
+}
+
+/* ============ HELPERS ============ */
+function id(){return Math.random().toString(36).slice(2,9)}
+function fmt(d){return d?new Date(d+'T00:00:00').toLocaleDateString('pt-BR'):'—'}
+function days(d){
+  if(!d)return NaN;
+  const t=new Date();t.setHours(0,0,0,0);
+  const x=new Date(d+'T00:00:00');x.setHours(0,0,0,0);
+  const diff=x.getTime()-t.getTime();
+  if(diff===0)return 0;
+  return diff>0?Math.ceil(diff/86400000):Math.floor(diff/86400000);
+}
+function money(v){return 'R$ '+(parseFloat(v)||0).toFixed(2).replace('.',',')}
+function pet(){return state.pets.find(p=>p.id===state.activePet)||state.pets[0]}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function nl2br(s){return esc(s).replace(/\n/g,'<br>')}
+function calcAge(birth){
+  if(!birth)return null;
+  const b=new Date(birth+'T00:00:00');const t=new Date();
+  let y=t.getFullYear()-b.getFullYear();
+  const m=t.getMonth()-b.getMonth();
+  if(m<0||(m===0&&t.getDate()<b.getDate()))y--;
+  if(y<1){
+    let months=(t.getFullYear()-b.getFullYear())*12+m;
+    if(t.getDate()<b.getDate())months--;
+    return months+' meses';
+  }
+  return y+(y===1?' ano':' anos');
+}
+
+/* ============ UI HELPERS ============ */
+function logoEl(big){return `<div class="logo${big?' big':''}">🐾<span class="badge">+</span></div>`}
+function brandEl(){return `<div class="brand">PetCare<span class="plus">+</span><span class="premium-text">PREMIUM</span></div>`}
+
+function topbar(t,back='home()'){
+  return `<div class="top">
+    <button class="back" onclick="${back}">‹</button>
+    <b style="font-size:18px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t}</b>
+    <span class="crown">👑 PREMIUM</span>
+  </div>`;
+}
+
+function nav(active){
+  const items=[
+    ['home','🏠','Início','home()'],
+    ['pets','🐶','Pets','pets()'],
+    ['vac','💉','Vacinas','vaccines()'],
+    ['groom','🛁','Banho','grooming()'],
+    ['fin','💰','Financeiro','expenses()'],
+    ['more','⋯','Mais','more()']
+  ];
+  return `<div class="nav">${items.map(([k,ic,nm,fn])=>`<button class="${active===k?'active':''}" onclick="${fn}"><span class="icon">${ic}</span>${nm}</button>`).join('')}</div>`;
+}
+
+/* ============ UPLOAD DE FOTOS (compressão para localStorage) ============ */
+function compressImage(file,cb,maxSize=900,quality=0.78){
+  if(!file)return;
+  if(file.size>15*1024*1024){alert('Foto muito grande. Use uma menor que 15MB.');return}
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      let w=img.width,h=img.height;
+      if(w>h&&w>maxSize){h=h*maxSize/w;w=maxSize}
+      else if(h>maxSize){w=w*maxSize/h;h=maxSize}
+      const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      cb(cv.toDataURL('image/jpeg',quality));
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ============ LOGIN ============ */
+function login(){
+  app.innerHTML=`<div class="hero">
+    ${logoEl(true)}
+    <div class="brand" style="margin-top:14px;justify-content:center">PetCare<span class="plus">+</span><span class="premium-text">PREMIUM</span></div>
+    <span class="crown" style="margin-top:14px">👑 EXCLUSIVO PREMIUM</span>
+    <h1 style="margin-top:24px">Área Premium para Assinantes</h1>
+    <p class="muted">Cuide de todos os seus pets em um só lugar, com recursos avançados para rotina, saúde, alimentação e controle de gastos.</p>
+    <div class="card" style="text-align:left;margin-top:24px">
+      <label>Digite seu e-mail de compra</label>
+      <input id="email" type="email" placeholder="seu@email.com" autocomplete="email">
+      <br><br>
+      <button class="btn gold" onclick="doLogin()">👑 Acessar Plano Premium</button>
+      <br><br>
+      <button class="btn secondary" onclick="install()">📱 Como instalar no celular</button>
+    </div>
+  </div>`;
+}
+function doLogin(){
+  const e=$('#email').value.trim().toLowerCase();
+  if(!e.includes('@'))return alert('Digite um e-mail válido');
+  state.email=e;save();
+  if(!state.pets.length)register();else home();
+}
+
+/* ============ CADASTRO / EDIÇÃO DE PET ============ */
+function register(editId){
+  const p=editId?state.pets.find(x=>x.id===editId)||{}:{};
+  const hasPhoto=p.photo&&p.photo.startsWith('data:');
+  const isFirst=!state.pets.length;
+  app.innerHTML=`${topbar(editId?'Editar pet':(isFirst?'Cadastrar primeiro pet':'Adicionar pet'),isFirst?'login()':'pets()')}
+  <div class="p"><div class="card">
+    <label>Nome do pet *</label>
+    <input id="pName" value="${esc(p.name)}" placeholder="Ex: Thor">
+
+    <label>Foto do pet</label>
+    <input id="pPhotoFile" type="file" accept="image/*" onchange="prevPetPhoto(event)">
+    <input type="hidden" id="pPhotoData" value="${hasPhoto?esc(p.photo):''}">
+    <div id="pPhotoPrev" style="margin-top:10px">${hasPhoto?`<img src="${p.photo}" class="photo-prev"><br><button class="btn secondary" style="margin-top:8px" onclick="clearPetPhoto()">Remover foto</button>`:'<div class="small">Se não enviar, usaremos uma foto padrão.</div>'}</div>
+
+    <label>Raça</label>
+    <input id="pBreed" value="${esc(p.breed)}" placeholder="Ex: Golden Retriever, SRD">
+
+    <div class="grid g2">
+      <div><label>Idade</label><input id="pAge" value="${esc(p.age)}" placeholder="Ex: 2 anos"></div>
+      <div><label>Peso (kg)</label><input id="pWeight" type="number" step="0.1" value="${esc(p.weight)}" placeholder="Ex: 12"></div>
+    </div>
+
+    <div class="grid g2">
+      <div><label>Porte</label><select id="pSize">
+        <option ${p.size==='Pequeno'?'selected':''}>Pequeno</option>
+        <option ${!p.size||p.size==='Médio'?'selected':''}>Médio</option>
+        <option ${p.size==='Grande'?'selected':''}>Grande</option>
+      </select></div>
+      <div><label>Sexo</label><select id="pSex">
+        <option value="" ${!p.sex?'selected':''}>—</option>
+        <option ${p.sex==='Macho'?'selected':''}>Macho</option>
+        <option ${p.sex==='Fêmea'?'selected':''}>Fêmea</option>
+      </select></div>
+    </div>
+
+    <label>Data de nascimento</label>
+    <input id="pBirth" type="date" value="${esc(p.birthdate)}">
+
+    <label>Alergias</label>
+    <textarea id="pAllergies" placeholder="Ex: alergia a frango, pólen">${esc(p.allergies)}</textarea>
+
+    <label>Personalidade</label>
+    <textarea id="pPersonality" placeholder="Ex: brincalhão, dócil, tímido com estranhos">${esc(p.personality)}</textarea>
+
+    <label>Medicamentos contínuos</label>
+    <textarea id="pMeds" placeholder="Ex: Antialérgico 1x ao dia">${esc(p.medications)}</textarea>
+
+    <label>Observações importantes</label>
+    <textarea id="pObs" placeholder="Ex: medo de trovão, microchipado">${esc(p.observations)}</textarea>
+
+    <br><br>
+    <button class="btn gold" onclick="savePet('${editId||''}')">Salvar pet</button>
+    ${editId?`<br><br><button class="btn secondary danger" onclick="deletePet('${editId}')">🗑️ Excluir este pet</button>`:''}
+  </div></div>`;
+}
+function prevPetPhoto(e){
+  compressImage(e.target.files[0],data=>{
+    $('#pPhotoData').value=data;
+    $('#pPhotoPrev').innerHTML=`<img src="${data}" class="photo-prev"><br><button class="btn secondary" style="margin-top:8px" onclick="clearPetPhoto()">Remover foto</button>`;
+  });
+}
+function clearPetPhoto(){
+  $('#pPhotoData').value='';
+  const f=$('#pPhotoFile');if(f)f.value='';
+  $('#pPhotoPrev').innerHTML='<div class="small">Se não enviar, usaremos uma foto padrão.</div>';
+}
+function savePet(editId){
+  const name=$('#pName').value.trim();
+  if(!name)return alert('Digite o nome do pet');
+  const customPhoto=$('#pPhotoData').value;
+  const obj={
+    id:editId||id(),name,
+    photo:customPhoto||PHOTO,
+    breed:$('#pBreed').value.trim(),
+    age:$('#pAge').value.trim(),
+    weight:$('#pWeight').value.trim(),
+    size:$('#pSize').value,
+    sex:$('#pSex').value,
+    birthdate:$('#pBirth').value,
+    allergies:$('#pAllergies').value.trim(),
+    personality:$('#pPersonality').value.trim(),
+    medications:$('#pMeds').value.trim(),
+    observations:$('#pObs').value.trim()
+  };
+  if(editId){state.pets=state.pets.map(p=>p.id===editId?obj:p)}
+  else{state.pets.push(obj);state.activePet=obj.id}
+  if(save())home();
+}
+function deletePet(petId){
+  if(!confirm('Excluir este pet e TODOS os registros (vacinas, banhos, lembretes, álbum, gastos)?'))return;
+  state.pets=state.pets.filter(p=>p.id!==petId);
+  state.vaccines=state.vaccines.filter(v=>v.petId!==petId);
+  state.grooming=state.grooming.filter(g=>g.petId!==petId);
+  state.reminders=state.reminders.filter(r=>r.petId!==petId);
+  state.gallery=state.gallery.filter(g=>g.petId!==petId);
+  state.expenses=state.expenses.filter(e=>e.petId!==petId);
+  if(state.food)delete state.food[petId];
+  if(state.activePet===petId)state.activePet=state.pets[0]?state.pets[0].id:null;
+  save();
+  if(!state.pets.length)register();else pets();
+}
+
+/* ============ HOME / DASHBOARD ============ */
+function home(){
+  if(!state.email)return login();
+  if(!state.pets.length)return register();
+  const p=pet();
+
+  const nextVac=[...state.vaccines.filter(v=>v.petId===p.id&&v.next)].sort((a,b)=>days(a.next)-days(b.next))[0];
+  const nextGroom=[...state.grooming.filter(g=>g.petId===p.id&&g.next)].sort((a,b)=>days(a.next)-days(b.next))[0];
+  const nextRem=[...state.reminders.filter(r=>r.petId===p.id&&!r.done&&r.date)].sort((a,b)=>days(a.date)-days(b.date))[0];
+
+  const now=new Date();
+  const ms=new Date(now.getFullYear(),now.getMonth(),1);
+  const monthSpent=state.expenses.filter(e=>e.petId===p.id&&e.date&&new Date(e.date+'T00:00:00')>=ms).reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+
+  const ageDisplay=p.birthdate?calcAge(p.birthdate):(p.age||'idade não informada');
+
+  const petSwitcher=state.pets.length>1?`<select onchange="switchPet(this.value)" style="background:#ffffff22;color:white;border:1px solid #ffffff44;border-radius:12px;padding:6px 10px;font-weight:800;font-size:12px;width:auto">${state.pets.map(x=>`<option value="${x.id}" ${x.id===p.id?'selected':''} style="color:#0f172a">${esc(x.name)}</option>`).join('')}</select>`:'';
+
+  app.innerHTML=`<div class="p">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div style="display:flex;gap:10px;align-items:center">${logoEl()}${brandEl()}</div>
+      <button class="back" onclick="settings()">⚙️</button>
+    </div>
+
+    <div class="grad-premium">
+      <div style="position:absolute;top:-30px;right:-25px;font-size:140px;opacity:.07;line-height:1">✨</div>
+      <div style="position:relative">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+          <span class="crown">👑 PREMIUM</span>
+          ${petSwitcher}
+        </div>
+        <div style="display:flex;gap:14px;align-items:center;margin-top:6px">
+          <img class="avatar lg" src="${p.photo}" onclick="register('${p.id}')">
+          <div style="min-width:0;flex:1">
+            <div style="font-size:24px;font-weight:900;line-height:1.1">${esc(p.name)}</div>
+            <div style="font-size:13px;opacity:.9;margin-top:4px">${esc(p.breed||'Pet')}</div>
+            <div style="font-size:13px;opacity:.85;margin-top:2px">${esc(ageDisplay)}${p.weight?' • '+esc(p.weight)+' kg':''}${p.sex?' • '+esc(p.sex):''}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid g2" style="margin-top:14px">
+      <div class="statCard" onclick="vaccines()">
+        <div class="small">💉 PRÓX. VACINA</div>
+        <b>${nextVac?fmt(nextVac.next):'—'}</b>
+        <div class="small ${nextVac&&days(nextVac.next)<0?'danger':''}">${nextVac?(days(nextVac.next)<0?'Atrasada':days(nextVac.next)===0?'Hoje!':'Em '+days(nextVac.next)+'d'):'Sem agendamento'}</div>
+      </div>
+      <div class="statCard" onclick="grooming()">
+        <div class="small">🛁 PRÓX. BANHO</div>
+        <b>${nextGroom?fmt(nextGroom.next):'—'}</b>
+        <div class="small ${nextGroom&&days(nextGroom.next)<0?'danger':''}">${nextGroom?(days(nextGroom.next)<0?'Atrasado':days(nextGroom.next)===0?'Hoje!':'Em '+days(nextGroom.next)+'d'):'Sem agendamento'}</div>
+      </div>
+      <div class="statCard" onclick="reminders()">
+        <div class="small">🔔 PRÓX. LEMBRETE</div>
+        <b style="font-size:14px">${nextRem?esc(nextRem.title.slice(0,18)):'—'}</b>
+        <div class="small">${nextRem?fmt(nextRem.date):'Sem lembretes'}</div>
+      </div>
+      <div class="statCard" onclick="expenses()">
+        <div class="small">💰 GASTO NO MÊS</div>
+        <b>${money(monthSpent)}</b>
+        <div class="small">Este mês</div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:22px">Acesso rápido</h3>
+    <div class="grid g4">
+      <button class="btn secondary qa" onclick="pets()">🐶<br>Pets</button>
+      <button class="btn secondary qa" onclick="vaccines()">💉<br>Vacinas</button>
+      <button class="btn secondary qa" onclick="grooming()">🛁<br>Banho</button>
+      <button class="btn secondary qa" onclick="foodScreen()">🍽️<br>Comida</button>
+      <button class="btn secondary qa" onclick="reminders()">🔔<br>Lembretes</button>
+      <button class="btn secondary qa" onclick="wallet()">📇<br>Carteira</button>
+      <button class="btn secondary qa" onclick="gallery()">📸<br>Álbum</button>
+      <button class="btn secondary qa" onclick="expenses()">💰<br>Gastos</button>
+      <button class="btn secondary qa" onclick="recipes()">🍳<br>Receitas</button>
+      <button class="btn secondary qa" onclick="settings()">⚙️<br>Config</button>
+    </div>
+
+  </div>${nav('home')}`;
+}
+function switchPet(petId){state.activePet=petId;save();home()}
+
+/* ============ LISTA DE PETS ============ */
+function pets(){
+  if(!state.email)return login();
+  const list=state.pets.map(p=>{
+    const vc=state.vaccines.filter(v=>v.petId===p.id).length;
+    const gc=state.grooming.filter(g=>g.petId===p.id).length;
+    const isActive=p.id===state.activePet;
+    return `<div class="card" style="${isActive?'border:2px solid #0ea5e9':''}">
+      <div style="display:flex;gap:12px;align-items:center">
+        <img class="avatar" src="${p.photo}">
+        <div style="flex:1;min-width:0">
+          <b style="font-size:16px">${esc(p.name)}</b>
+          ${isActive?'<span class="pill" style="margin-left:6px">ATIVO</span>':''}
+          <div class="small" style="margin-top:2px">${esc(p.breed||'—')}</div>
+          <div class="small">${esc(p.age||'—')}${p.weight?' • '+esc(p.weight)+' kg':''}${p.size?' • '+esc(p.size):''}</div>
+          <div class="small" style="margin-top:4px">💉 ${vc} • 🛁 ${gc}</div>
+        </div>
+      </div>
+      <div class="grid g3" style="margin-top:12px;gap:6px">
+        ${isActive?'<button class="btn secondary" disabled style="font-size:12px;padding:10px">Ativo</button>':`<button class="btn" style="font-size:12px;padding:10px" onclick="switchPet('${p.id}')">Selecionar</button>`}
+        <button class="btn secondary" style="font-size:12px;padding:10px" onclick="register('${p.id}')">✏️ Editar</button>
+        <button class="btn secondary danger" style="font-size:12px;padding:10px" onclick="deletePet('${p.id}')">🗑️</button>
+      </div>
+    </div>`;
+  }).join('')||`<div class="empty">Nenhum pet cadastrado.</div>`;
+  app.innerHTML=`${topbar('Meus pets')}<div class="p">
+    <button class="btn gold" onclick="register()">+ Adicionar novo pet</button>
+    <div class="alert purple" style="margin-top:14px">👑 <b>Premium:</b> cadastre quantos pets quiser, sem limites.</div>
+    <div class="list" style="margin-top:14px">${list}</div>
+  </div>${nav('pets')}`;
+}
+
+/* ============ VACINAS ============ */
+function vaccines(){
+  if(!state.email)return login();
+  if(!state.pets.length)return register();
+  const p=pet();
+  const list=[...state.vaccines.filter(v=>v.petId===p.id)]
+    .sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const nextDays=v=>v.next?days(v.next):null;
+  const statusOf=v=>{
+    if(!v.next)return {pill:'Sem próxima',cls:''};
+    const d=nextDays(v);
+    if(d<0)return {pill:'Atrasada',cls:'red'};
+    if(d<=15)return {pill:'Próxima',cls:'amber'};
+    return {pill:'Em dia',cls:'green'};
+  };
+  const html=list.map(v=>{
+    const st=statusOf(v);
+    return `<div class="card">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        ${v.photo?`<img src="${v.photo}" style="width:62px;height:62px;border-radius:18px;object-fit:cover;flex-shrink:0">`:`<div class="gIcon">💉</div>`}
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><b>${esc(v.name)}</b>${st.pill?`<span class="pill ${st.cls}">${st.pill}</span>`:''}</div>
+          <div class="small" style="margin-top:2px">Aplicada: ${fmt(v.date)}</div>
+          ${v.next?`<div class="small">Próxima: ${fmt(v.next)} ${nextDays(v)<0?'(há '+Math.abs(nextDays(v))+'d)':nextDays(v)===0?'(hoje!)':'(em '+nextDays(v)+'d)'}</div>`:''}
+          ${v.clinic?`<div class="small" style="margin-top:2px">🏥 ${esc(v.clinic)}</div>`:''}
+          ${v.obs?`<div class="small" style="margin-top:4px">${esc(v.obs)}</div>`:''}
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:10px">
+        <button class="btn secondary" style="font-size:12px;padding:10px;flex:1" onclick="vacForm('${v.id}')">✏️ Editar</button>
+        <button class="btn secondary danger" style="font-size:12px;padding:10px;flex:1" onclick="delVac('${v.id}')">🗑️ Excluir</button>
+      </div>
+    </div>`;
+  }).join('')||`<div class="empty">Nenhuma vacina cadastrada.<br>Toque em <b>+ Adicionar vacina</b>.</div>`;
+  app.innerHTML=`${topbar('Carteira de Vacinação')}<div class="p">
+    <button class="btn" onclick="vacForm()">+ Adicionar vacina</button>
+    <div class="list" style="margin-top:14px">${html}</div>
+  </div>${nav('vac')}`;
+}
+function vacForm(editId){
+  const v=editId?state.vaccines.find(x=>x.id===editId)||{}:{};
+  const hasPhoto=v.photo&&v.photo.startsWith('data:');
+  app.innerHTML=`${topbar(editId?'Editar vacina':'Nova vacina','vaccines()')}<div class="p"><div class="card">
+    <label>Nome da vacina *</label>
+    <input id="vName" value="${esc(v.name)}" placeholder="Ex: V10, Antirrábica, Giárdia">
+    <label>Data aplicada *</label>
+    <input id="vDate" type="date" value="${esc(v.date||new Date().toISOString().slice(0,10))}">
+    <label>Próxima dose</label>
+    <input id="vNext" type="date" value="${esc(v.next)}">
+    <label>Clínica/Veterinário</label>
+    <input id="vClinic" value="${esc(v.clinic)}" placeholder="Ex: Vet Pet Center / Dr. Carlos">
+    <label>Observação</label>
+    <textarea id="vObs" placeholder="Ex: pet ficou bem, próxima dose em 1 ano">${esc(v.obs)}</textarea>
+    <label>Foto/comprovante (opcional)</label>
+    <input id="vPhotoFile" type="file" accept="image/*" onchange="prevVacPhoto(event)">
+    <input type="hidden" id="vPhotoData" value="${hasPhoto?esc(v.photo):''}">
+    <div id="vPhotoPrev" style="margin-top:10px">${hasPhoto?`<img src="${v.photo}" class="photo-prev"><br><button class="btn secondary" style="margin-top:8px" onclick="clearVacPhoto()">Remover foto</button>`:''}</div>
+    <br><br>
+    <button class="btn" onclick="saveVac('${editId||''}')">Salvar vacina</button>
+  </div></div>`;
+}
+function prevVacPhoto(e){compressImage(e.target.files[0],d=>{$('#vPhotoData').value=d;$('#vPhotoPrev').innerHTML=`<img src="${d}" class="photo-prev"><br><button class="btn secondary" style="margin-top:8px" onclick="clearVacPhoto()">Remover foto</button>`})}
+function clearVacPhoto(){$('#vPhotoData').value='';const f=$('#vPhotoFile');if(f)f.value='';$('#vPhotoPrev').innerHTML=''}
+function saveVac(editId){
+  const name=$('#vName').value.trim();const date=$('#vDate').value;
+  if(!name)return alert('Digite o nome da vacina');
+  if(!date)return alert('Informe a data de aplicação');
+  const obj={id:editId||id(),petId:pet().id,name,date,next:$('#vNext').value,clinic:$('#vClinic').value.trim(),obs:$('#vObs').value.trim(),photo:$('#vPhotoData').value};
+  if(editId)state.vaccines=state.vaccines.map(x=>x.id===editId?obj:x);
+  else state.vaccines.push(obj);
+  if(save())vaccines();
+}
+function delVac(i){if(!confirm('Excluir esta vacina?'))return;state.vaccines=state.vaccines.filter(v=>v.id!==i);save();vaccines()}
+
+/* ============ BANHO / TOSA ============ */
+function grooming(){
+  if(!state.email)return login();
+  if(!state.pets.length)return register();
+  const p=pet();
+  const recs=[...state.grooming.filter(g=>g.petId===p.id)].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const last=recs[0];
+  const next=[...state.grooming.filter(g=>g.petId===p.id&&g.next)].sort((a,b)=>days(a.next)-days(b.next))[0];
+  const nd=next?days(next.next):null;
+  const now=new Date();const ms=new Date(now.getFullYear(),now.getMonth(),1);
+  const monthSpent=state.grooming.filter(g=>g.petId===p.id&&g.date&&new Date(g.date+'T00:00:00')>=ms).reduce((s,g)=>s+(parseFloat(g.price)||0),0);
+  let warn='';
+  if(next){
+    if(nd<0)warn=`<div class="alert danger">⚠️ Cuidado atrasado há ${Math.abs(nd)} dia(s).</div>`;
+    else if(nd<=3)warn=`<div class="alert warn">🔔 Próximo cuidado ${nd===0?'é hoje!':'em '+nd+' dia(s)'}.</div>`;
+  }
+  const nextCard=next?`<div class="grad" style="background:linear-gradient(135deg,#8b5cf6,#6366f1);margin-top:12px">
+    <div style="opacity:.85;font-size:12px;font-weight:800">PRÓXIMO BANHO/TOSA</div>
+    <div style="font-size:24px;font-weight:900;margin-top:4px">${fmt(next.next)}</div>
+    <div style="margin-top:6px">${nd<0?'Atrasado há '+Math.abs(nd)+' dia(s)':nd===0?'É hoje!':'Em '+nd+' dia(s)'}</div>
+  </div>`:'';
+  const summary=`<div class="grid g2" style="margin-top:14px">
+    <div class="statCard"><div class="small">REGISTROS</div><b>${recs.length}</b></div>
+    <div class="statCard"><div class="small">ÚLTIMO</div><b style="font-size:14px">${last?fmt(last.date):'—'}</b></div>
+    <div class="statCard"><div class="small">PRÓXIMO</div><b style="font-size:14px">${next?fmt(next.next):'—'}</b></div>
+    <div class="statCard"><div class="small">GASTO NO MÊS</div><b>${money(monthSpent)}</b></div>
+  </div>`;
+  const history=recs.map(g=>`<div class="card">
+    <div style="display:flex;gap:12px;align-items:flex-start">
+      ${g.photo?`<img src="${g.photo}" style="width:62px;height:62px;border-radius:18px;object-fit:cover;flex-shrink:0">`:`<div class="gIcon">🛁</div>`}
+      <div style="flex:1;min-width:0">
+        <b>${esc(g.type||'Banho')}</b>
+        <div class="small">${fmt(g.date)} • ${esc(g.location||'—')}${g.place?' • '+esc(g.place):''}</div>
+        ${g.price&&parseFloat(g.price)>0?`<div class="small" style="margin-top:2px"><b>${money(g.price)}</b></div>`:''}
+        ${g.next?`<div class="small">📅 Próximo: ${fmt(g.next)}</div>`:''}
+        ${g.obs?`<div class="small" style="margin-top:4px">${esc(g.obs)}</div>`:''}
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:10px">
+      <button class="btn secondary" style="font-size:12px;padding:10px;flex:1" onclick="groomingForm('${g.id}')">✏️ Editar</button>
+      <button class="btn secondary danger" style="font-size:12px;padding:10px;flex:1" onclick="delGrooming('${g.id}')">🗑️ Excluir</button>
+    </div>
+  </div>`).join('')||`<div class="empty">Nenhum registro de banho/tosa ainda.</div>`;
+  app.innerHTML=`${topbar('Banho / Tosa')}<div class="p">
+    <button class="btn purple" onclick="groomingForm()">+ Novo registro</button>
+    ${warn?'<br><br>'+warn:''}
+    ${nextCard}
+    ${summary}
+    <h3>Histórico</h3>
+    <div class="list">${history}</div>
+  </div>${nav('groom')}`;
+}
+function groomingForm(editId){
+  const g=editId?state.grooming.find(x=>x.id===editId)||{}:{};
+  const types=['Banho','Tosa','Banho + Tosa','Higiene','Corte de unhas','Limpeza de ouvido'];
+  const locs=['Em casa','Petshop','Veterinário','Outro'];
+  const hasPhoto=g.photo&&g.photo.startsWith('data:');
+  app.innerHTML=`${topbar(editId?'Editar registro':'Novo registro','grooming()')}<div class="p"><div class="card">
+    <label>Tipo</label><select id="gType">${types.map(t=>`<option ${g.type===t?'selected':''}>${t}</option>`).join('')}</select>
+    <label>Data realizada *</label><input id="gDate" type="date" value="${esc(g.date||new Date().toISOString().slice(0,10))}">
+    <label>Próxima data</label><input id="gNext" type="date" value="${esc(g.next)}">
+    <label>Local</label><select id="gLoc">${locs.map(l=>`<option ${g.location===l?'selected':''}>${l}</option>`).join('')}</select>
+    <label>Nome do local / profissional</label><input id="gPlace" value="${esc(g.place)}" placeholder="Ex: Petshop Patinhas">
+    <label>Valor pago (R$)</label><input id="gPrice" type="number" step="0.01" min="0" value="${esc(g.price)}" placeholder="Ex: 80.00">
+    <label>Observação</label><textarea id="gObs" placeholder="Ex: pet ficou tranquilo">${esc(g.obs)}</textarea>
+    <label>Foto após banho/tosa (opcional)</label>
+    <input id="gPhotoFile" type="file" accept="image/*" onchange="prevGroomPhoto(event)">
+    <input type="hidden" id="gPhotoData" value="${hasPhoto?esc(g.photo):''}">
+    <div id="gPhotoPrev" style="margin-top:10px">${hasPhoto?`<img src="${g.photo}" class="photo-prev"><br><button class="btn secondary" style="margin-top:8px" onclick="clearGroomPhoto()">Remover foto</button>`:''}</div>
+    <br><br>
+    <button class="btn purple" onclick="saveGrooming('${editId||''}')">Salvar registro</button>
+  </div></div>`;
+}
+function prevGroomPhoto(e){compressImage(e.target.files[0],d=>{$('#gPhotoData').value=d;$('#gPhotoPrev').innerHTML=`<img src="${d}" class="photo-prev"><br><button class="btn secondary" style="margin-top:8px" onclick="clearGroomPhoto()">Remover foto</button>`})}
+function clearGroomPhoto(){$('#gPhotoData').value='';const f=$('#gPhotoFile');if(f)f.value='';$('#gPhotoPrev').innerHTML=''}
+function saveGrooming(editId){
+  if(!$('#gDate').value)return alert('Informe a data realizada');
+  const obj={id:editId||id(),petId:pet().id,type:$('#gType').value,date:$('#gDate').value,next:$('#gNext').value,location:$('#gLoc').value,place:$('#gPlace').value.trim(),price:$('#gPrice').value,obs:$('#gObs').value.trim(),photo:$('#gPhotoData').value};
+  if(editId)state.grooming=state.grooming.map(x=>x.id===editId?obj:x);
+  else state.grooming.push(obj);
+  if(save())grooming();
+}
+function delGrooming(i){if(!confirm('Excluir este registro?'))return;state.grooming=state.grooming.filter(g=>g.id!==i);save();grooming()}
+
+/* ============ ALIMENTAÇÃO PREMIUM ============ */
+function foodScreen(tab){
+  if(!state.email)return login();
+  if(!state.pets.length)return register();
+  const p=pet();
+  const cur=state.food[p.id]||{};
+  tab=tab||'cfg';
+  const cfg=`<div class="card">
+    <label>Tipo de alimentação</label>
+    <select id="fType">
+      <option value="">—</option>
+      <option ${cur.type==='Ração'?'selected':''}>Ração</option>
+      <option ${cur.type==='Natural'?'selected':''}>Natural</option>
+      <option ${cur.type==='Mista'?'selected':''}>Mista</option>
+    </select>
+    <label>Marca da ração</label><input id="fBrand" value="${esc(cur.brand)}" placeholder="Ex: Premier, Royal Canin">
+    <label>Quantidade diária</label><input id="fAmount" value="${esc(cur.amount)}" placeholder="Ex: 250g/dia">
+    <label>Horários das refeições</label><input id="fSched" value="${esc(cur.schedules)}" placeholder="Ex: 07h, 12h, 19h">
+    <label>Alimentos permitidos para este pet</label><textarea id="fAllowed" placeholder="Ex: cenoura, frango cozido, maçã sem semente">${esc(cur.allowed)}</textarea>
+    <label>Alimentos proibidos para este pet</label><textarea id="fForbidden" placeholder="Ex: frango (alergia), chocolate, uva">${esc(cur.forbidden)}</textarea>
+    <label>Alergias alimentares</label><textarea id="fAllergies" placeholder="Ex: alergia a frango">${esc(cur.allergies||p.allergies||'')}</textarea>
+    <label>Observações</label><textarea id="fNotes" placeholder="Ex: come pouco no calor">${esc(cur.notes)}</textarea>
+    <br><br>
+    <button class="btn" onclick="saveFood()">💾 Salvar configurações</button>
+  </div>`;
+  const dietByPorte=p.size==='Pequeno'?'Porções menores e mais frequentes (3 a 4x ao dia). Ração de raça pequena tem grãos menores. Cuidado com obesidade.':p.size==='Grande'?'Porções maiores e bem balanceadas (2x ao dia). Atenção a articulações: ração específica para porte grande ajuda a prevenir displasia.':'Porte médio: 2 refeições por dia, ração balanceada apropriada para o porte.';
+  const ageBased=p.birthdate?(()=>{
+    const months=Math.floor((new Date()-new Date(p.birthdate+'T00:00:00'))/(86400000*30));
+    if(months<12)return 'Filhote (até 12 meses): 3-4 refeições por dia, ração de filhote rica em proteína e cálcio.';
+    if(months<84)return 'Adulto (1-7 anos): 2 refeições por dia, ração adulta balanceada.';
+    return 'Sênior (7+ anos): ração específica para sênior, com glucosamina. Acompanhe peso de perto.';
+  })():'Cadastre a data de nascimento do pet para receber dicas por idade.';
+  const tips=`
+    <div class="alert">🟢 <b>Pode comer (lista geral):</b> cenoura, maçã sem sementes, banana, batata-doce, frango cozido sem sal, abóbora, abobrinha, melancia sem sementes, pepino, arroz integral, pera sem caroço.</div>
+    <br><div class="alert danger">🔴 <b>Não pode (NUNCA):</b> chocolate, uva/passas, cebola/alho, ossos cozidos, abacate, álcool, café, xilitol, macadâmia, leite (a maioria é intolerante).</div>
+    <br><div class="alert purple">📏 <b>Dica por porte (${esc(p.size||'—')}):</b> ${dietByPorte}</div>
+    <br><div class="alert warn">📅 <b>Dica por idade:</b> ${ageBased}</div>
+    <div class="card" style="margin-top:12px">
+      <b>🍳 Quer receitas naturais?</b>
+      <p class="small" style="margin:6px 0">Acesse a área de receitas premium para ideias de petiscos e refeições caseiras seguras.</p>
+      <button class="btn purple" onclick="recipes()">Ver receitas premium</button>
+    </div>
+  `;
+  app.innerHTML=`${topbar('Alimentação Premium')}<div class="p">
+    <div class="tabs t2">
+      <button class="${tab==='cfg'?'on':''}" onclick="foodScreen('cfg')">⚙️ Configurações</button>
+      <button class="${tab==='tips'?'on':''}" onclick="foodScreen('tips')">💡 Dicas</button>
+    </div>
+    ${tab==='cfg'?cfg:tips}
+  </div>${nav('home')}`;
+}
+function saveFood(){
+  const p=pet();
+  state.food[p.id]={
+    type:$('#fType').value,brand:$('#fBrand').value.trim(),
+    amount:$('#fAmount').value.trim(),schedules:$('#fSched').value.trim(),
+    allowed:$('#fAllowed').value.trim(),forbidden:$('#fForbidden').value.trim(),
+    allergies:$('#fAllergies').value.trim(),notes:$('#fNotes').value.trim()
+  };
+  if(save())alert('✅ Configurações de alimentação salvas!');
+}
+
+/* ============ LEMBRETES (com recorrência) ============ */
+function reminders(tab){
+  if(!state.email)return login();
+  if(!state.pets.length)return register();
+  const p=pet();
+  tab=tab||'pending';
+  const all=state.reminders.filter(r=>r.petId===p.id);
+  const pending=all.filter(r=>!r.done).sort((a,b)=>days(a.date)-days(b.date));
+  const done=all.filter(r=>r.done).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const items=tab==='pending'?pending:done;
+  const typeIcon={vacina:'💉',banho:'🛁',remedio:'💊',ração:'🍽️',consulta:'🏥',outro:'🔔'};
+  const repeatLabel={daily:'diário',weekly:'semanal',monthly:'mensal',yearly:'anual'};
+  const html=items.map(r=>{
+    const d=days(r.date);
+    let badge='';
+    if(!r.done){
+      if(d<0)badge='<span class="pill red">Atrasado</span>';
+      else if(d===0)badge='<span class="pill amber">Hoje</span>';
+      else if(d<=3)badge='<span class="pill amber">Em breve</span>';
+      else badge='<span class="pill">Em '+d+'d</span>';
+    }
+    const icon=typeIcon[r.type]||'🔔';
+    return `<div class="card">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div class="gIcon">${icon}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><b>${esc(r.title)}</b>${badge}${r.repeat&&r.repeat!=='none'?`<span class="pill purple">↻ ${repeatLabel[r.repeat]||r.repeat}</span>`:''}</div>
+          <div class="small" style="margin-top:2px">${fmt(r.date)} • ${esc(r.type||'outro')}</div>
+          ${r.obs?`<div class="small" style="margin-top:4px">${esc(r.obs)}</div>`:''}
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:10px">
+        ${r.done?`<button class="btn secondary" style="font-size:12px;padding:10px;flex:1" onclick="toggleRem('${r.id}')">↩️ Desfazer</button>`:`<button class="btn" style="font-size:12px;padding:10px;flex:1" onclick="toggleRem('${r.id}')">✅ Marcar feito</button>`}
+        <button class="btn secondary" style="font-size:12px;padding:10px" onclick="remForm('${r.id}')">✏️</button>
+        <button class="btn secondary danger" style="font-size:12px;padding:10px" onclick="delRem('${r.id}')">🗑️</button>
+      </div>
+    </div>`;
+  }).join('')||`<div class="empty">Nenhum lembrete ${tab==='pending'?'pendente':'concluído'}.</div>`;
+  app.innerHTML=`${topbar('Lembretes')}<div class="p">
+    <button class="btn orange" onclick="remForm()">+ Novo lembrete</button>
+    <div class="tabs t2" style="margin-top:14px">
+      <button class="${tab==='pending'?'on':''}" onclick="reminders('pending')">⏳ Pendentes (${pending.length})</button>
+      <button class="${tab==='done'?'on':''}" onclick="reminders('done')">✅ Concluídos (${done.length})</button>
+    </div>
+    <div class="list">${html}</div>
+  </div>${nav('home')}`;
+}
+function remForm(editId){
+  const r=editId?state.reminders.find(x=>x.id===editId)||{}:{};
+  const types=[['vacina','💉 Vacina'],['banho','🛁 Banho'],['remedio','💊 Remédio'],['ração','🍽️ Ração'],['consulta','🏥 Consulta'],['outro','🔔 Outro']];
+  const repeats=[['none','Não repetir'],['daily','Diário'],['weekly','Semanal'],['monthly','Mensal'],['yearly','Anual']];
+  app.innerHTML=`${topbar(editId?'Editar lembrete':'Novo lembrete','reminders()')}<div class="p"><div class="card">
+    <label>Título *</label><input id="rTitle" value="${esc(r.title)}" placeholder="Ex: Dar vermífugo">
+    <label>Data *</label><input id="rDate" type="date" value="${esc(r.date||new Date().toISOString().slice(0,10))}">
+    <label>Tipo</label><select id="rType">${types.map(([v,l])=>`<option value="${v}" ${r.type===v?'selected':''}>${l}</option>`).join('')}</select>
+    <label>Repetição</label><select id="rRepeat">${repeats.map(([v,l])=>`<option value="${v}" ${(r.repeat||'none')===v?'selected':''}>${l}</option>`).join('')}</select>
+    <label>Observação</label><textarea id="rObs" placeholder="Ex: dose de 10kg">${esc(r.obs)}</textarea>
+    <br><br>
+    <button class="btn orange" onclick="saveRem('${editId||''}')">Salvar lembrete</button>
+  </div></div>`;
+}
+function saveRem(editId){
+  const title=$('#rTitle').value.trim();const date=$('#rDate').value;
+  if(!title)return alert('Digite o título');
+  if(!date)return alert('Informe a data');
+  const obj={id:editId||id(),petId:pet().id,title,date,type:$('#rType').value,repeat:$('#rRepeat').value,obs:$('#rObs').value.trim(),done:false};
+  if(editId){
+    const old=state.reminders.find(x=>x.id===editId);
+    if(old)obj.done=old.done;
+    state.reminders=state.reminders.map(x=>x.id===editId?obj:x);
+  }else state.reminders.push(obj);
+  if(save())reminders();
+}
+function toggleRem(i){
+  const r=state.reminders.find(x=>x.id===i);
+  if(!r)return;
+  // Marcando como feito + recorrência: cria automaticamente o próximo
+  if(!r.done&&r.repeat&&r.repeat!=='none'){
+    const next=new Date(r.date+'T00:00:00');
+    if(r.repeat==='daily')next.setDate(next.getDate()+1);
+    else if(r.repeat==='weekly')next.setDate(next.getDate()+7);
+    else if(r.repeat==='monthly')next.setMonth(next.getMonth()+1);
+    else if(r.repeat==='yearly')next.setFullYear(next.getFullYear()+1);
+    state.reminders.push({...r,id:id(),date:next.toISOString().slice(0,10),done:false});
+  }
+  r.done=!r.done;
+  save();reminders();
+}
+function delRem(i){if(!confirm('Excluir este lembrete?'))return;state.reminders=state.reminders.filter(r=>r.id!==i);save();reminders()}
+
+/* ============ CARTEIRA DIGITAL ============ */
+function wallet(){
+  if(!state.email)return login();
+  if(!state.pets.length)return register();
+  const p=pet();
+  const vacs=state.vaccines.filter(v=>v.petId===p.id).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const lastGroom=state.grooming.filter(g=>g.petId===p.id).sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0];
+  const ageDisplay=p.birthdate?calcAge(p.birthdate):(p.age||'—');
+  app.innerHTML=`${topbar('Carteira Digital')}<div class="p">
+    <div class="no-print" style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="btn secondary" style="flex:1" onclick="copyWallet()">📋 Copiar</button>
+      <button class="btn dark" style="flex:1" onclick="window.print()">🖨️ Salvar/Imprimir</button>
+    </div>
+
+    <div class="card" id="walletCard" style="background:linear-gradient(135deg,#1e1b4b 0%,#4c1d95 100%);color:white;border:2px solid #f59e0b;padding:0;overflow:hidden">
+      <div style="background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#78350f;padding:10px 18px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-weight:900;font-size:11px;letter-spacing:1px">👑 PETCARE+ PREMIUM</span>
+        <span style="font-weight:900;font-size:11px">CARTEIRA DIGITAL</span>
+      </div>
+      <div style="padding:20px">
+        <div style="display:flex;gap:14px;align-items:center">
+          <img class="avatar lg" src="${p.photo}" style="border:3px solid #fbbf24">
+          <div style="min-width:0;flex:1">
+            <div style="font-size:22px;font-weight:900;line-height:1.1">${esc(p.name)}</div>
+            <div style="opacity:.85;font-size:13px;margin-top:4px">${esc(p.breed||'—')}</div>
+          </div>
+        </div>
+        <div style="height:1px;background:#ffffff22;margin:16px 0"></div>
+        <div class="grid g2" style="gap:10px;font-size:13px">
+          <div><div style="opacity:.7;font-size:10px;letter-spacing:.5px">IDADE</div><b>${esc(ageDisplay)}</b></div>
+          <div><div style="opacity:.7;font-size:10px;letter-spacing:.5px">PESO</div><b>${p.weight?esc(p.weight)+' kg':'—'}</b></div>
+          <div><div style="opacity:.7;font-size:10px;letter-spacing:.5px">PORTE</div><b>${esc(p.size||'—')}</b></div>
+          <div><div style="opacity:.7;font-size:10px;letter-spacing:.5px">SEXO</div><b>${esc(p.sex||'—')}</b></div>
+          <div><div style="opacity:.7;font-size:10px;letter-spacing:.5px">NASCIMENTO</div><b>${fmt(p.birthdate)}</b></div>
+          <div><div style="opacity:.7;font-size:10px;letter-spacing:.5px">TUTOR</div><b style="word-break:break-all;font-size:11px">${esc(state.email||'—')}</b></div>
+        </div>
+        <div style="height:1px;background:#ffffff22;margin:16px 0"></div>
+        <div style="font-size:13px">
+          <div style="opacity:.7;font-size:10px;letter-spacing:.5px;margin-bottom:4px">ALERGIAS</div>
+          <div style="margin-bottom:10px">${p.allergies?nl2br(p.allergies):'Nenhuma registrada'}</div>
+          <div style="opacity:.7;font-size:10px;letter-spacing:.5px;margin-bottom:4px">MEDICAMENTOS CONTÍNUOS</div>
+          <div style="margin-bottom:10px">${p.medications?nl2br(p.medications):'Nenhum registrado'}</div>
+          <div style="opacity:.7;font-size:10px;letter-spacing:.5px;margin-bottom:4px">OBSERVAÇÕES</div>
+          <div>${p.observations?nl2br(p.observations):'—'}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <b>💉 Vacinas registradas (${vacs.length})</b>
+      ${vacs.length?'<div class="list" style="margin-top:8px">'+vacs.slice(0,10).map(v=>`<div class="small" style="padding:6px 0;border-bottom:1px solid #f1f5f9"><b>${esc(v.name)}</b> — ${fmt(v.date)}${v.next?' (próx: '+fmt(v.next)+')':''}</div>`).join('')+'</div>':'<p class="small" style="margin-top:6px">Nenhuma vacina cadastrada.</p>'}
+    </div>
+
+    <div class="card" style="margin-top:10px">
+      <b>🛁 Último banho/tosa</b>
+      ${lastGroom?`<div class="small" style="margin-top:6px"><b>${esc(lastGroom.type||'Banho')}</b> — ${fmt(lastGroom.date)}${lastGroom.place?' em '+esc(lastGroom.place):''}</div>`:'<p class="small" style="margin-top:6px">Sem registro.</p>'}
+    </div>
+  </div>${nav('home')}`;
+}
+function copyWallet(){
+  const p=pet();
+  const vacs=state.vaccines.filter(v=>v.petId===p.id);
+  const lastGroom=state.grooming.filter(g=>g.petId===p.id).sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0];
+  const text=`🐾 PETCARE+ PREMIUM — CARTEIRA DIGITAL
+
+Nome: ${p.name}
+Raça: ${p.breed||'—'}
+Idade: ${p.birthdate?calcAge(p.birthdate):(p.age||'—')}
+Peso: ${p.weight||'—'} kg
+Porte: ${p.size||'—'}
+Sexo: ${p.sex||'—'}
+Nascimento: ${fmt(p.birthdate)}
+Tutor: ${state.email}
+
+Alergias: ${p.allergies||'Nenhuma'}
+Medicamentos: ${p.medications||'Nenhum'}
+Observações: ${p.observations||'—'}
+
+Vacinas (${vacs.length}):
+${vacs.map(v=>`  - ${v.name} (${fmt(v.date)}${v.next?', próx: '+fmt(v.next):''})`).join('\n')||'  Nenhuma'}
+
+Último banho/tosa: ${lastGroom?lastGroom.type+' em '+fmt(lastGroom.date):'Sem registro'}`;
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>alert('✅ Informações copiadas!')).catch(()=>fallbackCopy(text));
+  }else fallbackCopy(text);
+}
+function fallbackCopy(text){
+  const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');alert('✅ Informações copiadas!')}catch(e){alert('Não foi possível copiar automaticamente.')}
+  document.body.removeChild(ta);
+}
+
+/* ============ ÁLBUM DE FOTOS ============ */
+function gallery(filter){
+  if(!state.email)return login();
+  if(!state.pets.length)return register();
+  const p=pet();
+  filter=filter||'all';
+  const cats=[['all','Todas'],['momento','✨ Momento'],['banho','🛁 Banho'],['crescimento','📏 Crescimento'],['saude','❤️ Saúde'],['outro','📷 Outro']];
+  const photos=state.gallery.filter(g=>g.petId===p.id&&(filter==='all'||g.category===filter)).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const grid=photos.length?`<div class="gallery-grid">${photos.map(g=>`<div class="gphoto" onclick="viewPhoto('${g.id}')"><img src="${g.photo}"></div>`).join('')}</div>`:`<div class="empty">Nenhuma foto ${filter==='all'?'no álbum':'nesta categoria'}.</div>`;
+  app.innerHTML=`${topbar('Álbum do Pet')}<div class="p">
+    <button class="btn purple" onclick="galleryForm()">+ Adicionar foto</button>
+    <div style="display:flex;gap:6px;overflow-x:auto;margin:14px 0;padding-bottom:4px;-webkit-overflow-scrolling:touch">
+      ${cats.map(([v,l])=>`<button class="btn ${filter===v?'':'secondary'}" style="white-space:nowrap;width:auto;padding:8px 14px;font-size:12px" onclick="gallery('${v}')">${l}</button>`).join('')}
+    </div>
+    ${grid}
+  </div>${nav('home')}`;
+}
+function galleryForm(){
+  app.innerHTML=`${topbar('Adicionar foto','gallery()')}<div class="p"><div class="card">
+    <label>Foto *</label>
+    <input id="galPhotoFile" type="file" accept="image/*" onchange="prevGalPhoto(event)">
+    <input type="hidden" id="galPhotoData" value="">
+    <div id="galPhotoPrev" style="margin-top:10px"></div>
+    <label>Título</label><input id="galTitle" placeholder="Ex: Primeiro banho">
+    <label>Data</label><input id="galDate" type="date" value="${new Date().toISOString().slice(0,10)}">
+    <label>Categoria</label>
+    <select id="galCat">
+      <option value="momento">✨ Momento especial</option>
+      <option value="banho">🛁 Banho/tosa</option>
+      <option value="crescimento">📏 Crescimento</option>
+      <option value="saude">❤️ Saúde</option>
+      <option value="outro">📷 Outro</option>
+    </select>
+    <br><br>
+    <button class="btn purple" onclick="saveGalPhoto()">Salvar foto</button>
+  </div></div>`;
+}
+function prevGalPhoto(e){compressImage(e.target.files[0],d=>{$('#galPhotoData').value=d;$('#galPhotoPrev').innerHTML=`<img src="${d}" class="photo-prev">`})}
+function saveGalPhoto(){
+  const photo=$('#galPhotoData').value;
+  if(!photo)return alert('Selecione uma foto');
+  state.gallery.push({id:id(),petId:pet().id,photo,title:$('#galTitle').value.trim(),date:$('#galDate').value,category:$('#galCat').value});
+  if(save())gallery();
+}
+function viewPhoto(i){
+  const g=state.gallery.find(x=>x.id===i);
+  if(!g)return;
+  const m=document.createElement('div');
+  m.className='modal';
+  m.innerHTML=`<div style="text-align:center;max-width:100%">
+    <img src="${g.photo}">
+    <div style="color:white;margin-top:14px"><b>${esc(g.title||'')}</b></div>
+    <div style="color:#cbd5e1;font-size:12px">${fmt(g.date)}</div>
+    <button class="btn secondary danger" style="max-width:200px;margin:14px auto 0;display:block" onclick="event.stopPropagation();delGalPhoto('${g.id}')">🗑️ Excluir foto</button>
+  </div>`;
+  m.onclick=()=>m.remove();
+  document.body.appendChild(m);
+}
+function delGalPhoto(i){
+  if(!confirm('Excluir esta foto do álbum?'))return;
+  state.gallery=state.gallery.filter(g=>g.id!==i);
+  save();
+  document.querySelectorAll('.modal').forEach(m=>m.remove());
+  gallery();
+}
+
+/* ============ FINANCEIRO ============ */
+function expenses(){
+  if(!state.email)return login();
+  if(!state.pets.length)return register();
+  const p=pet();
+  const list=state.expenses.filter(e=>e.petId===p.id).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const now=new Date();const ms=new Date(now.getFullYear(),now.getMonth(),1);
+  const monthExp=list.filter(e=>e.date&&new Date(e.date+'T00:00:00')>=ms);
+  const monthTotal=monthExp.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+  const totalAll=list.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+  const byCat={};
+  monthExp.forEach(e=>{byCat[e.category]=(byCat[e.category]||0)+(parseFloat(e.amount)||0)});
+  const catIcon={'Ração':'🍽️','Banho/Tosa':'🛁','Veterinário':'🏥','Remédio':'💊','Brinquedo':'🧸','Vacina':'💉','Outro':'📦'};
+  const catBlock=Object.keys(byCat).length?`<div class="card"><b>📊 Por categoria neste mês</b>${Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([c,v])=>{
+    const pct=monthTotal?Math.round(v/monthTotal*100):0;
+    return `<div style="margin-top:10px">
+      <div style="display:flex;justify-content:space-between;font-size:13px"><span>${catIcon[c]||'📦'} ${esc(c)}</span><b>${money(v)} (${pct}%)</b></div>
+      <div style="height:8px;background:#f1f5f9;border-radius:4px;margin-top:4px;overflow:hidden"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#0ea5e9,#10b981)"></div></div>
+    </div>`;
+  }).join('')}</div>`:'';
+  const histHtml=list.map(e=>`<div class="card">
+    <div style="display:flex;gap:12px;align-items:center">
+      <div class="gIcon gold" style="font-size:24px">${catIcon[e.category]||'📦'}</div>
+      <div style="flex:1;min-width:0">
+        <b>${money(e.amount)}</b>
+        <div class="small">${esc(e.category)} • ${fmt(e.date)}</div>
+        ${e.obs?`<div class="small" style="margin-top:2px">${esc(e.obs)}</div>`:''}
+      </div>
+      <button class="back danger" onclick="delExpense('${e.id}')">🗑️</button>
+    </div>
+  </div>`).join('')||`<div class="empty">Nenhuma despesa registrada.</div>`;
+  app.innerHTML=`${topbar('Financeiro Pet')}<div class="p">
+    <button class="btn gold" onclick="expenseForm()">+ Nova despesa</button>
+    <div class="grad-gold" style="margin-top:14px">
+      <div style="font-size:11px;font-weight:900;letter-spacing:.5px;opacity:.85">GASTO NO MÊS</div>
+      <div style="font-size:32px;font-weight:900;margin-top:4px">${money(monthTotal)}</div>
+      <div style="font-size:12px;margin-top:4px;opacity:.85">${monthExp.length} despesa(s) • Total geral: ${money(totalAll)}</div>
+    </div>
+    ${catBlock}
+    <h3>Histórico</h3>
+    <div class="list">${histHtml}</div>
+  </div>${nav('fin')}`;
+}
+function expenseForm(){
+  const cats=['Ração','Banho/Tosa','Veterinário','Remédio','Brinquedo','Vacina','Outro'];
+  app.innerHTML=`${topbar('Nova despesa','expenses()')}<div class="p"><div class="card">
+    <label>Categoria *</label><select id="eCat">${cats.map(c=>`<option>${c}</option>`).join('')}</select>
+    <label>Valor (R$) *</label><input id="eAmount" type="number" step="0.01" min="0" placeholder="Ex: 80.00">
+    <label>Data *</label><input id="eDate" type="date" value="${new Date().toISOString().slice(0,10)}">
+    <label>Observação</label><textarea id="eObs" placeholder="Ex: ração 10kg Premier"></textarea>
+    <br><br>
+    <button class="btn gold" onclick="saveExpense()">Salvar despesa</button>
+  </div></div>`;
+}
+function saveExpense(){
+  const amount=$('#eAmount').value;
+  if(!amount||parseFloat(amount)<=0)return alert('Informe um valor válido');
+  if(!$('#eDate').value)return alert('Informe a data');
+  state.expenses.push({id:id(),petId:pet().id,category:$('#eCat').value,amount,date:$('#eDate').value,obs:$('#eObs').value.trim()});
+  if(save())expenses();
+}
+function delExpense(i){if(!confirm('Excluir esta despesa?'))return;state.expenses=state.expenses.filter(e=>e.id!==i);save();expenses()}
+
+/* ============ RECEITAS PREMIUM ============ */
+const RECIPES=[
+  {cat:'Petiscos',name:'Biscoito de banana e aveia',ing:['1 banana madura','1 xícara de aveia em flocos','1 colher de sopa de água'],steps:'Amasse a banana, misture a aveia e a água até formar uma massa. Modele biscoitos pequenos, coloque em assadeira untada e asse a 180°C por 15-20 min até dourar. Esfrie completamente antes de oferecer.',warn:'Ofereça 1-2 biscoitos por dia como petisco, não como refeição.'},
+  {cat:'Petiscos',name:'Petisco de cenoura assada',ing:['2 cenouras médias','Água para cozinhar'],steps:'Corte a cenoura em palitos finos. Cozinhe no vapor por 5 min para amaciar levemente. Disponha em assadeira e asse a 180°C por 25 min até ficarem firmes. Esfrie antes de servir.',warn:'Ótimo para limpeza dos dentes. Sem sal, sem óleo, sem temperos.'},
+  {cat:'Refeições',name:'Frango com legumes',ing:['200g de peito de frango sem pele','1 cenoura pequena','1/2 abobrinha','1/4 xícara de arroz integral'],steps:'Cozinhe o frango em água sem sal por 20 min e desfie. Cozinhe o arroz em água. Cozinhe a cenoura e abobrinha cortadas em cubinhos no vapor. Misture tudo morno na hora de servir.',warn:'Equivale a uma refeição de pet de porte médio (10-15kg). Ajuste para o seu pet.'},
+  {cat:'Refeições',name:'Patê natural simples',ing:['150g de patinho moído sem gordura','1 cenoura pequena ralada','1 colher de sopa de azeite extravirgem'],steps:'Cozinhe a carne em água sem sal até soltar a gordura. Escorra. Misture com a cenoura ralada crua e o azeite. Sirva morno.',warn:'Use azeite com moderação. Pode guardar 2 dias na geladeira em pote fechado.'},
+  {cat:'Refrescantes',name:'Cubinhos refrescantes de fruta',ing:['1/2 banana','3 morangos sem cabo','100ml de água filtrada'],steps:'Bata tudo no liquidificador. Distribua em forminhas de gelo de silicone. Leve ao freezer por 4 horas. Ofereça em dias quentes, fora dos horários das refeições.',warn:'Apenas frutas seguras: banana, morango, melancia sem semente. NUNCA use uva, passas ou abacate.'},
+  {cat:'Petiscos',name:'Petisco de batata-doce',ing:['1 batata-doce média','Água para cozinhar'],steps:'Lave bem e corte a batata em fatias finas (cerca de 5mm). Cozinhe por 3 min em água fervente. Disponha em assadeira e asse a 160°C por 1h30 até ficarem secas e crocantes. Esfrie totalmente.',warn:'Excelente fonte de fibras. Guarde em pote fechado por até 1 semana.'},
+  {cat:'Refeições',name:'Arroz com frango sem tempero',ing:['1/2 xícara de arroz branco','100g de peito de frango','Água'],steps:'Cozinhe o frango em água sem sal por 15 min. Desfie. Cozinhe o arroz na mesma água do frango (sem sal, sem alho, sem cebola). Misture e sirva morno.',warn:'Excelente para pets com problemas digestivos leves. Ofereça por 2-3 dias e volte à alimentação normal.'},
+  {cat:'Refrescantes',name:'Sopa leve para dias quentes',ing:['200ml de água','100g de peito de frango','1 cenoura pequena','1 colher de chá de salsinha'],steps:'Cozinhe o frango e a cenoura em cubinhos por 20 min na água sem sal. Desfie o frango, pique a cenoura, adicione a salsinha picada. Sirva morno ou em temperatura ambiente.',warn:'Ótimo para hidratação em dias quentes. Não substitui água fresca disponível o tempo todo.'}
+];
+function recipes(cat){
+  if(!state.email)return login();
+  const cats=['Todas','Petiscos','Refeições','Refrescantes'];
+  cat=cat||'Todas';
+  const list=cat==='Todas'?RECIPES:RECIPES.filter(r=>r.cat===cat);
+  app.innerHTML=`${topbar('Receitas Premium')}<div class="p">
+    <div class="alert purple">👑 <b>Receitas exclusivas Premium.</b> Todas testadas e seguras para pets saudáveis.</div>
+    <div style="display:flex;gap:6px;overflow-x:auto;margin:14px 0;padding-bottom:4px;-webkit-overflow-scrolling:touch">
+      ${cats.map(c=>`<button class="btn ${cat===c?'gold':'secondary'}" style="white-space:nowrap;width:auto;padding:8px 14px;font-size:12px" onclick="recipes('${c}')">${esc(c)}</button>`).join('')}
+    </div>
+    <div class="list">
+      ${list.map((r,i)=>{
+        const realIdx=RECIPES.indexOf(r);
+        return `<div class="card" onclick="viewRecipe(${realIdx})" style="cursor:pointer">
+          <div style="display:flex;gap:12px;align-items:center">
+            <div class="gIcon gold" style="font-size:28px">🍳</div>
+            <div style="flex:1;min-width:0">
+              <b>${esc(r.name)}</b>
+              <div class="small" style="margin-top:2px">${esc(r.cat)} • ${r.ing.length} ingredientes</div>
+            </div>
+            <span style="font-size:24px;color:#cbd5e1">›</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>${nav('home')}`;
+}
+function viewRecipe(idx){
+  const r=RECIPES[idx];if(!r)return;
+  app.innerHTML=`${topbar(r.name,'recipes()')}<div class="p">
+    <div class="grad-gold">
+      <div style="font-size:11px;font-weight:900;letter-spacing:.5px">${esc(r.cat).toUpperCase()}</div>
+      <h2 style="margin:6px 0 0">${esc(r.name)}</h2>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <b>🥕 Ingredientes</b>
+      <ul style="margin:8px 0 0;padding-left:20px;line-height:1.8">${r.ing.map(i=>`<li>${esc(i)}</li>`).join('')}</ul>
+    </div>
+    <div class="card" style="margin-top:10px">
+      <b>👩‍🍳 Modo de preparo</b>
+      <p style="margin:8px 0 0;line-height:1.6">${esc(r.steps)}</p>
+    </div>
+    <div class="alert warn" style="margin-top:10px">⚠️ <b>Observação de segurança:</b> ${esc(r.warn)}</div>
+    <div class="alert danger" style="margin-top:10px">🏥 <b>Importante:</b> Consulte um veterinário em caso de dúvidas ou restrições alimentares. Esta receita é apenas sugestão e não substitui orientação profissional.</div>
+  </div>`;
+}
+
+/* ============ TELA "MAIS" ============ */
+function more(){
+  if(!state.email)return login();
+  app.innerHTML=`${topbar('Mais opções')}<div class="p">
+    <div class="grid g2">
+      <button class="btn secondary qa" onclick="foodScreen()">🍽️<br>Alimentação</button>
+      <button class="btn secondary qa" onclick="reminders()">🔔<br>Lembretes</button>
+      <button class="btn secondary qa" onclick="wallet()">📇<br>Carteira</button>
+      <button class="btn secondary qa" onclick="gallery()">📸<br>Álbum</button>
+      <button class="btn secondary qa" onclick="recipes()">🍳<br>Receitas</button>
+      <button class="btn secondary qa" onclick="settings()">⚙️<br>Configurações</button>
+    </div>
+  </div>${nav('more')}`;
+}
+
+/* ============ CONFIGURAÇÕES ============ */
+function settings(){
+  if(!state.email)return login();
+  const p=pet();
+  app.innerHTML=`${topbar('Configurações')}<div class="p">
+    <div class="card">
+      <b>👤 E-mail de acesso</b>
+      <div class="small" style="margin-top:4px;word-break:break-all">${esc(state.email)}</div>
+    </div>
+
+    <div class="card" style="margin-top:10px">
+      <b>🐾 Pets</b>
+      ${p?`<div class="small" style="margin-top:4px">Pet ativo: <b>${esc(p.name)}</b></div>`:''}
+      <br>
+      <button class="btn secondary" onclick="pets()">Trocar pet ativo / Ver lista</button>
+      <br><br>
+      <button class="btn secondary" onclick="register()">+ Adicionar novo pet</button>
+    </div>
+
+    <div class="card" style="margin-top:10px">
+      <b>📦 Backup dos seus dados</b>
+      <p class="small" style="margin:6px 0">Exporte um arquivo com tudo (pets, vacinas, banhos, lembretes, álbum, financeiro). Restaure quando trocar de celular.</p>
+      <button class="btn purple" onclick="exportBackup()">📥 Exportar dados (JSON)</button>
+      <br><br>
+      <button class="btn secondary" onclick="triggerImport()">📤 Importar dados (JSON)</button>
+      <input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importBackup(event)">
+    </div>
+
+    <div class="card" style="margin-top:10px">
+      <b>📱 Aplicativo</b><br>
+      <button class="btn secondary" style="margin-top:8px" onclick="install()">Como instalar no celular</button>
+    </div>
+
+    <div class="card" style="margin-top:10px;border-color:#fecaca">
+      <b class="danger">⚠️ Zona de perigo</b>
+      <p class="small" style="margin:6px 0">Apaga TODOS os dados deste navegador (sem voltar atrás).</p>
+      <button class="btn secondary danger" onclick="wipeAll()">🗑️ Limpar todos os dados</button>
+      <br><br>
+      <button class="btn secondary" onclick="logout()">↩️ Sair</button>
+    </div>
+  </div>${nav('more')}`;
+}
+function logout(){if(confirm('Sair do app? Seus dados continuam salvos no celular.')){state.email='';save();login()}}
+function wipeAll(){
+  if(!confirm('Tem CERTEZA? Isso apaga todos os pets, vacinas, banhos, álbum, financeiro e configurações.'))return;
+  if(!confirm('Última confirmação. Esta ação NÃO pode ser desfeita.'))return;
+  localStorage.removeItem(K);
+  state={email:'',plan:'premium',pets:[],activePet:null,vaccines:[],grooming:[],food:{},reminders:[],gallery:[],expenses:[]};
+  login();
+}
+
+/* ============ EXPORT / IMPORT ============ */
+function exportBackup(){
+  try{
+    const payload={...state,_exportedAt:new Date().toISOString(),_appVersion:'petcare_plus_premium_v1'};
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=`petcare-premium-backup-${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),200);
+  }catch(e){alert('Não foi possível gerar o backup.')}
+}
+function triggerImport(){const f=$('#importFile');if(f)f.click()}
+function importBackup(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const imp=JSON.parse(ev.target.result);
+      if(typeof imp!=='object'||imp===null||!Array.isArray(imp.pets)){
+        alert('Arquivo inválido. Selecione um backup PetCare+.');e.target.value='';return;
+      }
+      const resumo=`Restaurar este backup?\n\n${imp.pets.length} pet(s)\n${(imp.vaccines||[]).length} vacina(s)\n${(imp.grooming||[]).length} banho(s)/tosa(s)\n${(imp.reminders||[]).length} lembrete(s)\n${(imp.gallery||[]).length} foto(s)\n${(imp.expenses||[]).length} despesa(s)\n\nOs dados atuais serão substituídos.`;
+      if(!confirm(resumo)){e.target.value='';return}
+      const pets=imp.pets||[];
+      let active=imp.activePet||imp.active;
+      if(!pets.find(p=>p.id===active))active=pets[0]?pets[0].id:null;
+      const novo={
+        email:imp.email||state.email,plan:'premium',pets,activePet:active,
+        vaccines:Array.isArray(imp.vaccines)?imp.vaccines:[],
+        grooming:Array.isArray(imp.grooming)?imp.grooming:[],
+        food:imp.food&&typeof imp.food==='object'?imp.food:{},
+        reminders:Array.isArray(imp.reminders)?imp.reminders:[],
+        gallery:Array.isArray(imp.gallery)?imp.gallery:[],
+        expenses:Array.isArray(imp.expenses)?imp.expenses:[]
+      };
+      const backup=JSON.stringify(state);
+      state=novo;
+      try{
+        save();e.target.value='';
+        alert('✅ Backup restaurado com sucesso!');
+        if(state.email&&state.pets.length)home();else if(state.email)register();else login();
+      }catch(qe){
+        state=JSON.parse(backup);
+        alert('Espaço cheio. Tente em um aparelho com mais espaço.');e.target.value='';
+      }
+    }catch(err){alert('Erro ao ler o arquivo. Verifique se é um backup válido.');e.target.value=''}
+  };
+  reader.readAsText(file);
+}
+
+/* ============ INSTALAR NO CELULAR ============ */
+function install(){
+  app.innerHTML=`${topbar('Instalar aplicativo',state.email?'settings()':'login()')}<div class="p">
+    <div class="alert purple">📱 Após instalar, o app abre em tela cheia, com ícone próprio e funciona offline.</div>
+    <div class="card" style="margin-top:14px">
+      <b>🤖 Android</b>
+      <ol style="line-height:1.8;margin:8px 0 0;padding-left:20px">
+        <li>Abra este site no <b>Chrome</b>.</li>
+        <li>Toque nos <b>3 pontinhos</b> (canto superior direito).</li>
+        <li>Toque em <b>"Adicionar à tela inicial"</b> ou <b>"Instalar app"</b>.</li>
+        <li>Confirme em <b>"Instalar"</b>.</li>
+      </ol>
+    </div>
+    <div class="card" style="margin-top:10px">
+      <b>🍎 iPhone</b>
+      <ol style="line-height:1.8;margin:8px 0 0;padding-left:20px">
+        <li>Abra este site no <b>Safari</b>.</li>
+        <li>Toque no botão de <b>compartilhar</b> (quadrado com seta).</li>
+        <li>Escolha <b>"Adicionar à Tela de Início"</b>.</li>
+        <li>Confirme em <b>"Adicionar"</b>.</li>
+      </ol>
+    </div>
+    <br>
+    <button class="btn" onclick="${state.email?(state.pets.length?'home()':'register()'):'login()'}">Continuar</button>
+  </div>`;
+}
+
+/* ============ BOOT ============ */
+if(state.email){
+  if(state.pets.length)home();else register();
+}else{
+  login();
+}
+
+/* ============ SERVICE WORKER (PWA) ============ */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})});
+}
+</script>
+</body>
+</html>
